@@ -133,3 +133,5 @@ export const GenerateStudyTypeContent = inngest.createFunction(
     });
   }
 );
+
+

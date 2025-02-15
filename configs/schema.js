@@ -35,4 +35,4 @@ export const STUDY_TYPE_CONTENT_TABLE = pgTable('studyTypeContent',{
     type:varchar().notNull(),
     status:varchar().default('Generating'),
     createdAt: timestamp().defaultNow()
-})
+}) 
