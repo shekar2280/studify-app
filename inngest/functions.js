@@ -99,57 +99,39 @@ export const GenerateNotes = inngest.createFunction(
 );
 
 export const GenerateStudyTypeContent = inngest.createFunction(
-  { id: "Generate Study Type Content", timeout: "10m" },
-  { event: "studyType.content" },
+  { id: 'Generate Study Type Content' },
+  { event: 'studyType.content' },
   async ({ event, step }) => {
     const { studyType, prompt, courseId, recordId } = event.data;
 
     if (!prompt || prompt.trim().length === 0) {
       throw new Error("Invalid prompt: The prompt must not be empty.");
     }
-
-    // **Split the prompt into smaller topic-based prompts**
-    const subtopics = prompt.split(",");
-
-    const AiResults = await step.run("Generate AI Responses in Parallel", async () => {
+    
+    const AiResult = await step.run('Generate Flashcard using AI', async () => {
       try {
-        console.log("Processing subtopics separately:", subtopics);
-
-        const responses = await Promise.all(
-          subtopics.map(async (subtopic) => {
-            const subtopicPrompt = `Generate 5-6 question-answer pairs for: ${subtopic.trim()}. Return JSON only.`;
-
-            let result;
-            if (studyType === "Flashcards") {
-              result = await generateStudyTypeContentAiModel.sendMessage(subtopicPrompt);
-            } else if (studyType === "Quiz") {
-              result = await GenerateQuizAiModel.sendMessage(subtopicPrompt);
-            } else {
-              result = await GenerateQAAiModel.sendMessage(subtopicPrompt);
-            }
-
-            return JSON.parse(result.response.text());
-          })
-        );
-
-        return responses.flat(); // Flatten array to merge all subtopic results
+        console.log("Prompt being sent to AI:", JSON.stringify(prompt, null, 2));
+        const result = 
+        studyType=='Flashcards'?
+        await generateStudyTypeContentAiModel.sendMessage(prompt) :
+        studyType=='Quiz' ?
+        await GenerateQuizAiModel.sendMessage(prompt) :
+        await GenerateQAAiModel.sendMessage(prompt);
+        const AIResult = JSON.parse(result.response.text());
+        return AIResult;
       } catch (error) {
         console.error("AI Model Error:", error);
         throw new Error("Failed to generate study type content requested");
       }
     });
 
-    await step.run("Save Result to DB", async () => {
-      await db.update(STUDY_TYPE_CONTENT_TABLE)
-        .set({ content: AiResults, status: "Ready" })
+    await step.run('Save Result to DB', async () => {
+      const result = await db.update(STUDY_TYPE_CONTENT_TABLE)
+        .set({ content: AiResult, status:'Ready' })
         .where(eq(STUDY_TYPE_CONTENT_TABLE.id, recordId));
-
-      return "Data Inserted";
+      return 'Data Inserted';
     });
-
-    return { status: "Success" };
   }
 );
-
 
 
