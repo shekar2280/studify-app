@@ -28,11 +28,11 @@ function Create() {
     const GenerateCourseOutline=async()=>{
       const courseId=uuidv4();
       setLoading(true);
-      const result = await axios.post('api/generate-course-outline',{
-        courseId:courseId,
+      const result = await axios.post('/api/generate-course-outline', {
+        courseId: courseId,
         ...formData,
-        createdBy:user?.primaryEmailAddress?.emailAddress
-      });
+        createdBy: user?.primaryEmailAddress?.emailAddress,
+      });      
       setLoading(false);
       router.replace('/dashboard');
       toast("Your course content is generating, Click on Refresh after sometime")
