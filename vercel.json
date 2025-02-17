@@ -1,9 +1,8 @@
 {
-    "functions": {
-      "api/generate-course-outline/route.js": {
-        "memory": 1024,
-        "maxDuration": 60
-      }
+  "functions": {
+    "pages/api/generate-course-outline.js": {
+      "memory": 1024,
+      "maxDuration": 60
     }
   }
-  
+}
