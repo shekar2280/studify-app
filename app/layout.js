@@ -2,7 +2,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { Outfit } from "next/font/google";
 import Provider from "./provider";
-import { Toaster } from "@/components/ui/sonner"
+import { Toaster } from "@/components/ui/sonner";
+import QueryProvider from "./provider/QueryProvider";
 
 export const metadata = {
   title: "Create Next App",
@@ -16,8 +17,10 @@ export default function RootLayout({ children }) {
     <ClerkProvider>
       <html lang="en">
         <body className={outfit.className}>
-          <Provider>{children}</Provider>
-          <Toaster/>
+          <QueryProvider>
+            <Provider>{children}</Provider>
+          </QueryProvider>
+          <Toaster />
         </body>
       </html>
     </ClerkProvider>

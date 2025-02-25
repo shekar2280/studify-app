@@ -13,7 +13,9 @@ function CourseList() {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    user && GetCourseList();
+    if (user) {
+      GetCourseList();
+    }
   }, [user]);
 
   const GetCourseList = async () => {
@@ -22,21 +24,49 @@ function CourseList() {
       createdBy: user?.primaryEmailAddress?.emailAddress,
     });
 
-    console.log(result);
     setCourseList(result.data.result);
     setLoading(false);
+
+    startPolling(result.data.result);
   };
 
-  // Show all courses if search bar is empty, otherwise filter
-  const filteredCourses =
-  searchQuery.trim() === ""
-    ? courseList
-    : courseList.filter((course) =>
-        course.courseLayout?.course_name
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase())
+  const startPolling = (courses) => {
+    const processingCourses = courses.filter(course => course.status === "processing");
+    if (processingCourses.length === 0) return;
+
+    const interval = setInterval(async () => {
+      const updatedCourses = await Promise.all(
+        processingCourses.map(async (course) => {
+          try {
+            const res = await axios.get(`/api/get-course-outline?recordId=${course.id}`);
+            return res.data.status === "completed" ? res.data : course;
+          } catch (error) {
+            console.error("Error fetching course status:", error);
+            return course;
+          }
+        })
       );
 
+      setCourseList((prevCourses) =>
+        prevCourses.map((course) =>
+          updatedCourses.find((c) => c.id === course.id) || course
+        )
+      );
+
+      if (!updatedCourses.some((c) => c.status === "processing")) {
+        clearInterval(interval);
+      }
+    }, 5000); 
+  };
+  
+  const filteredCourses =
+    searchQuery.trim() === ""
+      ? courseList
+      : courseList.filter((course) =>
+          course.courseLayout?.course_name
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase())
+        );
 
   return (
     <div className="mt-10">
@@ -67,12 +97,11 @@ function CourseList() {
       </h2>
 
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 mt-5 gap-5">
-        {loading == false
+        {!loading
           ? filteredCourses.map((course, index) => (
               <CourseCardItem course={course} key={index} />
             ))
-          : 
-          [1, 2, 3, 4, 5, 6].map((item, index) => (
+          : [1, 2, 3, 4, 5, 6].map((item, index) => (
               <div
                 key={index}
                 className="h-56 w-full bg-slate-200 rounded-lg animate-pulse"

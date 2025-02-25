@@ -1,33 +1,40 @@
-import { courseOutlineAIModel } from "@/configs/AImodel";
 import { db } from "@/configs/db";
 import { STUDY_MATERIAL_TABLE } from "@/configs/schema";
 import { inngest } from "@/inngest/client";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
-    const {courseId,topic,courseType,difficultyLevel,createdBy}=await req.json();
-    
-    const PROMPT='Generate a study material for '+topic+' for '+courseType+' and level of difficulty will be '+difficultyLevel+' with summary of course, List of Chapters along with sumary and Emoji icon for each chapter with proper spacing after each chapter subtopics, Topic list in each chapter in JSON format'
+    try {
+        const { courseId, topic, courseType, difficultyLevel, createdBy } = await req.json();
+        
+        console.log("Received request with data:", { courseId, topic, courseType, difficultyLevel, createdBy });
 
-    const aiResp = await courseOutlineAIModel.sendMessage(PROMPT)
-    const aiResult = JSON.parse(aiResp.response.text());
+        // Insert placeholder record
+        const dbResult = await db.insert(STUDY_MATERIAL_TABLE).values({
+            courseId,
+            courseType,
+            createdBy,
+            topic,
+            courseLayout: null,
+            status: "processing"
+        }).returning({ id: STUDY_MATERIAL_TABLE.id });
 
+        console.log("DB Insert Result:", dbResult);
 
-    const dbResult = await db.insert(STUDY_MATERIAL_TABLE).values({
-        courseId:courseId,
-        courseType:courseType,
-        createdBy:createdBy,
-        topic:topic,
-        courseLayout:aiResult
-    }).returning({resp:STUDY_MATERIAL_TABLE})
+        const recordId = dbResult[0]?.id;
+        if (!recordId) throw new Error("Failed to insert study material");
 
-    const result = await inngest.send({
-        name:'notes.generate',
-        data:{
-            course:dbResult[0].resp
-        }
-    })
-    console.log(result);
+        console.log("Triggering Inngest function with:", { recordId, topic, courseType, difficultyLevel });
 
-    return NextResponse.json({result:dbResult[0]})
+        // Send event to Inngest
+        await inngest.send({
+            name: "course.generateOutline",
+            data: { recordId, topic, courseType, difficultyLevel }
+        });
+
+        return NextResponse.json({ jobId: recordId });
+    } catch (error) {
+        console.error("API Error:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 }
