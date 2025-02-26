@@ -72,11 +72,19 @@ export const GenerateNotes = inngest.createFunction(
     const generateChapterNotes = async (chapter, index) => {
       console.log(`📝 Generating Notes for Chapter ${index + 1}: ${chapter.chapter_name}`);
 
+      // 1️⃣ Insert a "Generating" status for the chapter
+      await db.insert(CHAPTER_NOTES_TABLE).values({
+        chapterId: index + 1,
+        courseId: course.courseId,
+        notes: "",
+        status: "Generating",
+      });
+
       const PROMPT = `Generate detailed notes for the chapter: ${JSON.stringify(chapter)}`;
       const result = await generateNotesAiModel.sendMessage(PROMPT);
 
-      const aiResp = await result.response.text(); // ✅ Fix: Await `text()`
-      
+      const aiResp = await result.response.text();
+
       if (!aiResp || aiResp.trim().length === 0) {
         console.error(`🚨 Empty AI response for Chapter ${index + 1}`);
         throw new Error("AI returned empty notes.");
@@ -84,23 +92,13 @@ export const GenerateNotes = inngest.createFunction(
 
       console.log(`📌 AI Response for Chapter ${index + 1}:`, aiResp);
 
-      console.log("📌 Preparing to insert into DB:", {
-        chapterId: index + 1,
-        courseId: course.courseId,
-        notes: aiResp,
-      });
+      // 2️⃣ Update the status to "Ready" once notes are generated
+      await db.update(CHAPTER_NOTES_TABLE)
+        .set({ notes: aiResp, status: "Ready" })
+        .where(eq(CHAPTER_NOTES_TABLE.courseId, course.courseId))
+        .where(eq(CHAPTER_NOTES_TABLE.chapterId, index + 1));
 
-      try {
-        await db.insert(CHAPTER_NOTES_TABLE).values({
-          chapterId: index + 1,
-          courseId: course.courseId,
-          notes: aiResp,
-        });
-        console.log(`✅ Successfully inserted notes for Chapter ${index + 1}`);
-      } catch (dbError) {
-        console.error("🚨 Database Insert Error:", dbError.message);
-        throw new Error("Failed to insert notes into the database.");
-      }
+      console.log(`✅ Successfully inserted and updated notes for Chapter ${index + 1}`);
     };
 
     await step.run("Generate Chapter Notes", async () => {
@@ -115,6 +113,7 @@ export const GenerateNotes = inngest.createFunction(
     console.log("✅ Notes generation process completed!");
   }
 );
+
 
 
 
@@ -186,10 +185,13 @@ export const generateCourseOutline = inngest.createFunction(
         .where(eq(STUDY_MATERIAL_TABLE.id, recordId));
 
 
-      await inngest.send({
-        name: "notes.generate",
-        data: { course: { courseId: correctCourseId, courseLayout: aiResult } },
-      });
+        await inngest.send({
+          name: "notes.generate",
+          data: { course: { courseId: existingCourse[0].courseId, courseLayout: aiResult } },
+        });
+        
+        console.log("✅ Successfully triggered notes.generate");
+        
 
     } catch (error) {
       console.error("🚨 AI Generation Error:", error.message);

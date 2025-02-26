@@ -20,13 +20,15 @@ export const STUDY_MATERIAL_TABLE=pgTable('studyMaterial', {
     createdAt: timestamp().defaultNow()
 })
 
-export const CHAPTER_NOTES_TABLE=pgTable('chapterNotes',{
-    id:serial().primaryKey(),
-    courseId:varchar().notNull(),
-    chapterId:integer().notNull(),
-    notes:text(),
-    createdAt: timestamp().defaultNow()
-})
+export const CHAPTER_NOTES_TABLE = pgTable("chapterNotes", {
+    id: serial().primaryKey(),
+    courseId: varchar().notNull(),
+    chapterId: integer().notNull(),
+    notes: text(),
+    status: varchar().default("Generating"), 
+    createdAt: timestamp().defaultNow(),
+  });
+  
 
 export const STUDY_TYPE_CONTENT_TABLE = pgTable('studyTypeContent',{
     id:serial().primaryKey(),

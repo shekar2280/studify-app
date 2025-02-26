@@ -39,7 +39,7 @@ function CourseList() {
         processingCourses.map(async (course) => {
           try {
             const res = await axios.get(`/api/get-course-outline?recordId=${course.id}`);
-            return res.data.status === "completed" ? res.data : course;
+            return res.data.status === "Ready" ? res.data : course;
           } catch (error) {
             console.error("Error fetching course status:", error);
             return course;
@@ -99,7 +99,7 @@ function CourseList() {
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 mt-5 gap-5">
         {!loading
           ? filteredCourses.map((course, index) => (
-              <CourseCardItem course={course} key={index} />
+              <CourseCardItem course={course} key={index} chapters={course?.courseLayout?.chapters || []} />
             ))
           : [1, 2, 3, 4, 5, 6].map((item, index) => (
               <div

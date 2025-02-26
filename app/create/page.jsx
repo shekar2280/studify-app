@@ -33,9 +33,11 @@ function Create() {
       ...formData,
       createdBy: user?.primaryEmailAddress?.emailAddress,
     });
-    setLoading(false);
-    router.replace("/dashboard");
-    toast("Your course content is generating, Click on Refresh after sometime");
+    setTimeout(() => {
+      setLoading(false);
+      router.replace("/dashboard");
+    }, 10000);
+    // toast("Your course content is generating, Click on Refresh after sometime");
   };
   
   return (
