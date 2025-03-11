@@ -74,7 +74,6 @@ export const GenerateNotes = inngest.createFunction(
         `📝 Generating Notes for Chapter ${index + 1}: ${chapter.chapter_name}`
       );
 
-      // 1️⃣ Insert a "Generating" status for the chapter
       const [insertedNote] = await db
         .insert(CHAPTER_NOTES_TABLE)
         .values({
@@ -99,15 +98,10 @@ export const GenerateNotes = inngest.createFunction(
 
       console.log(`📌 AI Response for Chapter ${index + 1}:`, aiResp);
 
-      // 2️⃣ Update the status to "Ready" once notes are generated
       await db
         .update(CHAPTER_NOTES_TABLE)
         .set({ notes: aiResp, status: "Ready" })
         .where(eq(CHAPTER_NOTES_TABLE.id, insertedNote.id));
-
-      console.log(
-        `✅ Successfully inserted and updated notes for Chapter ${index + 1}`
-      );
     };
 
     await step.run("Generate Chapter Notes", async () => {
@@ -118,8 +112,6 @@ export const GenerateNotes = inngest.createFunction(
       }
       return "Completed";
     });
-
-    console.log("✅ Notes generation process completed!");
   }
 );
 
@@ -213,7 +205,6 @@ export const generateCourseOutline = inngest.createFunction(
         },
       });
 
-      console.log("✅ Successfully triggered notes.generate");
     } catch (error) {
       console.error("🚨 AI Generation Error:", error.message);
       await db
