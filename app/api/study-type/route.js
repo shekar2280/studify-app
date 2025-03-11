@@ -13,8 +13,6 @@ export async function POST(req) {
         const contentList = await db.select().from(STUDY_TYPE_CONTENT_TABLE)
             .where(eq(STUDY_TYPE_CONTENT_TABLE?.courseId, courseId));
 
-        // Log the content list to inspect it
-        console.log("Full Content List:", contentList);
 
         const flashcards = contentList?.filter(item => item.type === "Flashcards" && item.status === "Ready");
 

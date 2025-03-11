@@ -31,7 +31,7 @@ function CourseList() {
   };
 
   const startPolling = (courses) => {
-    const processingCourses = courses.filter(course => course.status === "processing");
+    const processingCourses = courses.filter(course => course.status === "Generating");
     if (processingCourses.length === 0) return;
 
     const interval = setInterval(async () => {
@@ -53,7 +53,7 @@ function CourseList() {
         )
       );
 
-      if (!updatedCourses.some((c) => c.status === "processing")) {
+      if (!updatedCourses.some((c) => c.status === "Generating")) {
         clearInterval(interval);
       }
     }, 5000); 

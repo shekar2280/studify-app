@@ -7,7 +7,7 @@ function StudyMaterialSection({ courseId, course }) {
   const [studyTypeContent, setStudyTypeContent] = useState();
   const MaterialList = [
     {
-      name: "Notes/Chapters",
+      name: "Notes",
       icon: "/notes.png",
       path: "/notes",
       type: "notes",

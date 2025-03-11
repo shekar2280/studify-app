@@ -9,7 +9,6 @@ export async function POST(req) {
         
         console.log("Received request with data:", { courseId, topic, courseType, difficultyLevel, createdBy });
 
-        // Insert placeholder record
         const dbResult = await db.insert(STUDY_MATERIAL_TABLE).values({
             courseId,
             courseType,
@@ -19,14 +18,10 @@ export async function POST(req) {
             status: "processing"
         }).returning({ id: STUDY_MATERIAL_TABLE.id });
 
-        console.log("DB Insert Result:", dbResult);
-
         const recordId = dbResult[0]?.id;
         if (!recordId) throw new Error("Failed to insert study material");
 
-        console.log("Triggering Inngest function with:", { recordId, topic, courseType, difficultyLevel });
 
-        // Send event to Inngest
         await inngest.send({
             name: "course.generateOutline",
             data: { recordId, topic, courseType, difficultyLevel }

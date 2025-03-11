@@ -7,12 +7,12 @@ import {
   USER_TABLE,
 } from "@/configs/schema";
 import { eq } from "drizzle-orm";
-import { 
-  generateNotesAiModel, 
-  GenerateQAAiModel, 
-  GenerateQuizAiModel, 
-  generateStudyTypeContentAiModel, 
-  courseOutlineAIModel 
+import {
+  generateNotesAiModel,
+  GenerateQAAiModel,
+  GenerateQuizAiModel,
+  generateStudyTypeContentAiModel,
+  courseOutlineAIModel,
 } from "@/configs/AImodel";
 
 export const helloWorld = inngest.createFunction(
@@ -70,17 +70,24 @@ export const GenerateNotes = inngest.createFunction(
     }
 
     const generateChapterNotes = async (chapter, index) => {
-      console.log(`📝 Generating Notes for Chapter ${index + 1}: ${chapter.chapter_name}`);
+      console.log(
+        `📝 Generating Notes for Chapter ${index + 1}: ${chapter.chapter_name}`
+      );
 
       // 1️⃣ Insert a "Generating" status for the chapter
-      await db.insert(CHAPTER_NOTES_TABLE).values({
-        chapterId: index + 1,
-        courseId: course.courseId,
-        notes: "",
-        status: "Generating",
-      });
+      const [insertedNote] = await db
+        .insert(CHAPTER_NOTES_TABLE)
+        .values({
+          chapterId: index + 1,
+          courseId: course.courseId,
+          notes: "",
+          status: "Generating",
+        })
+        .returning({ id: CHAPTER_NOTES_TABLE.id });
 
-      const PROMPT = `Generate detailed notes for the chapter: ${JSON.stringify(chapter)}`;
+      const PROMPT = `Generate detailed notes for the chapter: ${JSON.stringify(
+        chapter
+      )}`;
       const result = await generateNotesAiModel.sendMessage(PROMPT);
 
       const aiResp = await result.response.text();
@@ -93,12 +100,14 @@ export const GenerateNotes = inngest.createFunction(
       console.log(`📌 AI Response for Chapter ${index + 1}:`, aiResp);
 
       // 2️⃣ Update the status to "Ready" once notes are generated
-      await db.update(CHAPTER_NOTES_TABLE)
+      await db
+        .update(CHAPTER_NOTES_TABLE)
         .set({ notes: aiResp, status: "Ready" })
-        .where(eq(CHAPTER_NOTES_TABLE.courseId, course.courseId))
-        .where(eq(CHAPTER_NOTES_TABLE.chapterId, index + 1));
+        .where(eq(CHAPTER_NOTES_TABLE.id, insertedNote.id));
 
-      console.log(`✅ Successfully inserted and updated notes for Chapter ${index + 1}`);
+      console.log(
+        `✅ Successfully inserted and updated notes for Chapter ${index + 1}`
+      );
     };
 
     await step.run("Generate Chapter Notes", async () => {
@@ -114,13 +123,9 @@ export const GenerateNotes = inngest.createFunction(
   }
 );
 
-
-
-
-
 export const GenerateStudyTypeContent = inngest.createFunction(
-  { id: 'Generate Study Type Content' },
-  { event: 'studyType.content' },
+  { id: "Generate Study Type Content" },
+  { event: "studyType.content" },
   async ({ event, step }) => {
     const { studyType, prompt, courseId, recordId } = event.data;
 
@@ -128,27 +133,36 @@ export const GenerateStudyTypeContent = inngest.createFunction(
       throw new Error("Invalid prompt: The prompt must not be empty.");
     }
 
-    const AiResult = await step.run('Generate Study Type Content using AI', async () => {
-      try {
-        console.log("Prompt being sent to AI:", JSON.stringify(prompt, null, 2));
-        const result = 
-          studyType === 'Flashcards' ? await generateStudyTypeContentAiModel.sendMessage(prompt) :
-          studyType === 'Quiz' ? await GenerateQuizAiModel.sendMessage(prompt) :
-          await GenerateQAAiModel.sendMessage(prompt);
-        
-        return JSON.parse(result.response.text());
-      } catch (error) {
-        console.error("AI Model Error:", error);
-        throw new Error("Failed to generate study type content");
-      }
-    });
+    const AiResult = await step.run(
+      "Generate Study Type Content using AI",
+      async () => {
+        try {
+          console.log(
+            "Prompt being sent to AI:",
+            JSON.stringify(prompt, null, 2)
+          );
+          const result =
+            studyType === "Flashcards"
+              ? await generateStudyTypeContentAiModel.sendMessage(prompt)
+              : studyType === "Quiz"
+              ? await GenerateQuizAiModel.sendMessage(prompt)
+              : await GenerateQAAiModel.sendMessage(prompt);
 
-    await step.run('Save Result to DB', async () => {
-      await db.update(STUDY_TYPE_CONTENT_TABLE)
-        .set({ content: AiResult, status: 'Ready' })
+          return JSON.parse(result.response.text());
+        } catch (error) {
+          console.error("AI Model Error:", error);
+          throw new Error("Failed to generate study type content");
+        }
+      }
+    );
+
+    await step.run("Save Result to DB", async () => {
+      await db
+        .update(STUDY_TYPE_CONTENT_TABLE)
+        .set({ content: AiResult, status: "Ready" })
         .where(eq(STUDY_TYPE_CONTENT_TABLE.id, recordId));
 
-      return 'Data Inserted';
+      return "Data Inserted";
     });
   }
 );
@@ -168,37 +182,44 @@ export const generateCourseOutline = inngest.createFunction(
 
     try {
       const aiResp = await courseOutlineAIModel.sendMessage(PROMPT);
-      const aiResult = JSON.parse(await aiResp.response.text()); 
+      const aiResult = JSON.parse(await aiResp.response.text());
 
       const existingCourse = await db
         .select({ courseId: STUDY_MATERIAL_TABLE.courseId })
         .from(STUDY_MATERIAL_TABLE)
         .where(eq(STUDY_MATERIAL_TABLE.id, recordId));
 
-      if (!existingCourse || existingCourse.length === 0 || !existingCourse[0].courseId) {
+      if (
+        !existingCourse ||
+        existingCourse.length === 0 ||
+        !existingCourse[0].courseId
+      ) {
         console.error("🚨 Course not found or courseId missing!");
         throw new Error("Course not found in the database.");
       }
 
-      await db.update(STUDY_MATERIAL_TABLE)
+      await db
+        .update(STUDY_MATERIAL_TABLE)
         .set({ courseLayout: aiResult, status: "Ready" })
         .where(eq(STUDY_MATERIAL_TABLE.id, recordId));
 
+      await inngest.send({
+        name: "notes.generate",
+        data: {
+          course: {
+            courseId: existingCourse[0].courseId,
+            courseLayout: aiResult,
+          },
+        },
+      });
 
-        await inngest.send({
-          name: "notes.generate",
-          data: { course: { courseId: existingCourse[0].courseId, courseLayout: aiResult } },
-        });
-        
-        console.log("✅ Successfully triggered notes.generate");
-        
-
+      console.log("✅ Successfully triggered notes.generate");
     } catch (error) {
       console.error("🚨 AI Generation Error:", error.message);
-      await db.update(STUDY_MATERIAL_TABLE)
+      await db
+        .update(STUDY_MATERIAL_TABLE)
         .set({ status: "failed" })
         .where(eq(STUDY_MATERIAL_TABLE.id, recordId));
     }
   }
 );
-

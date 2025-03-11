@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently \"next dev\" \"inngest dev\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -31,12 +31,14 @@
     "react": "^18",
     "react-card-flip": "^1.2.3",
     "react-dom": "^18",
+    "react-markdown": "^10.1.0",
     "sonner": "^1.7.1",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.0.3"
   },
   "devDependencies": {
+    "concurrently": "^9.1.2",
     "drizzle-kit": "^0.30.1",
     "postcss": "^8",
     "tailwindcss": "^3.4.1"

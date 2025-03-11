@@ -2,78 +2,62 @@
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import ReactMarkdown from "react-markdown";
 
-function formatMarkdownToHTML(text) {
-  if (!text) return "";
-  if (Array.isArray(text)) text = text.join("\n");
-
-  return String(text) // Ensure text is a string
-    .replace(/\*\*\*(.*?)\*\*\*/g, "<b><i>$1</i></b>") // Bold & Italic
-    .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>") // Bold
-    .replace(/\*(.*?)\*/g, "<i>$1</i>") // Italic
-    .replace(/\n\*/g, "<br>•") // Convert * into bullet points with line breaks
-    .replace(/^\*/gm, "•") // Replace * at start of lines with bullet points
-    .replace(/\n/g, "<br>"); // Preserve line breaks properly
-}
-
-function safeParseNotes(notesString) {
-  if (typeof notesString !== "string") return notesString;
+function parseNotes(notesString) {
+  if (typeof notesString !== "string") return "Invalid content";
 
   try {
     const parsed = JSON.parse(notesString);
-    let contentHTML = "";
+    let content = "";
 
     if (parsed.chapter_name) {
-      contentHTML += `<h2>${parsed.emoji || ""} ${parsed.chapter_name}</h2>`;
+      content += `## ${parsed.emoji || ""} ${parsed.chapter_name}\n\n`;
     }
-
     if (parsed.chapter_summary) {
-      contentHTML += `<p>${formatMarkdownToHTML(parsed.chapter_summary)}</p>`;
+      content += `${parsed.chapter_summary}\n\n`;
     }
 
-    // Handle "subtopics" format
-    if (Array.isArray(parsed.subtopics)) {
-      parsed.subtopics.forEach((subtopic) => {
-        contentHTML += `<h3>${subtopic.title}</h3>`;
+    const sections = parsed.topics || parsed.subtopics || [];
 
-        if (Array.isArray(subtopic.content)) {
-          subtopic.content.forEach((item) => {
-            if (typeof item === "string") {
-              contentHTML += `<p>${formatMarkdownToHTML(item)}</p>`;
-            } else if (typeof item === "object" && item.V) {
-              // Handle the 5 V’s special format
-              contentHTML += `<h4>${item.V}</h4>`;
-              contentHTML += `<p>${formatMarkdownToHTML(item.description)}</p>`;
+    if (Array.isArray(sections)) {
+      sections.forEach((section) => {
+        const sectionTitle = section.title || section.topic_title;
+        if (sectionTitle) {
+          content += `### ${sectionTitle}\n\n`;
+        }
 
-              if (Array.isArray(item.examples)) {
-                contentHTML += "<ul>";
-                item.examples.forEach((example) => {
-                  contentHTML += `<li>${formatMarkdownToHTML(example)}</li>`;
-                });
-                contentHTML += "</ul>";
-              }
+        if (typeof section.content === "string" && section.content.trim() !== "") {
+          content += `${section.content}\n\n`;
+        } else if (Array.isArray(section.content)) {
+          section.content.forEach((line) => {
+            if (line.startsWith("*") || line.startsWith("-")) {
+              content += `${line}\n`; 
+            } else if (line.includes("`")) {
+              content += `\n\`\`\`\n${line.replace(/`/g, "")}\n\`\`\`\n`; 
+            } else {
+              content += `${line}\n\n`; 
             }
           });
+        }
+
+       
+        if (Array.isArray(section.notes) && section.notes.length > 0) {
+          section.notes.forEach((note) => {
+            content += `- ${note}\n`;
+          });
+          content += `\n`;
         }
       });
     }
 
-    // Handle "notes" format
-    if (Array.isArray(parsed.notes)) {
-      parsed.notes.forEach((note) => {
-        contentHTML += `<h3>${note.subtopic}</h3>`;
-        contentHTML += `<p>${formatMarkdownToHTML(note.content.join("\n"))}</p>`;
-      });
-    }
-
-    return contentHTML || "<p>No content available</p>";
+    return content.trim() || "No content available";
   } catch (error) {
     console.error("🚨 Error parsing JSON:", error);
-    return "<p>Invalid content format</p>";
+    return "Invalid content format";
   }
 }
-
 
 
 function ViewNotes() {
@@ -82,23 +66,19 @@ function ViewNotes() {
   const [stepCount, setStepCount] = useState(0);
   const router = useRouter();
 
-  useEffect(() => {
-    GetNotes();
-  }, []);
-
-  const GetNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     try {
-      const result = await axios.post("/api/study-type", {
+      const { data } = await axios.post("/api/study-type", {
         courseId,
         studyType: "notes",
       });
 
-      console.log("Raw API Response:", result?.data);
+      console.log("Raw API Response:", data);
 
-      const sortedNotes = result?.data
+      const sortedNotes = data
         .map((item) => ({
           chapterId: item.chapterId,
-          content: safeParseNotes(item.notes),
+          content: parseNotes(item.notes),
         }))
         .sort((a, b) => a.chapterId - b.chapterId);
 
@@ -107,75 +87,73 @@ function ViewNotes() {
     } catch (error) {
       console.error("Error fetching notes:", error);
     }
-  };
+  }, [courseId]);
+
+  useEffect(() => {
+    fetchNotes();
+  }, [fetchNotes]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleNext = () => {
-    if (stepCount < notes.length) {
-      setStepCount(stepCount + 1);
+    if (stepCount < notes.length - 1) {
+      setStepCount((prev) => prev + 1);
       scrollToTop();
     }
   };
 
   const handlePrevious = () => {
     if (stepCount > 0) {
-      setStepCount(stepCount - 1);
+      setStepCount((prev) => prev - 1);
       scrollToTop();
     }
   };
 
   return (
-    notes.length > 0 && (
-      <div>
+    <div>
+      {notes.length > 0 ? (
         <div className="mt-10">
-          {stepCount < notes.length ? (
-            <div
-              className="prose prose-xs md:prose-sm lg:prose-lg max-w-none"
-              dangerouslySetInnerHTML={{
-                __html: notes[stepCount]?.content,
-              }}
-            />
-          ) : (
-            <div className="flex items-center gap-10 flex-col justify-center">
-              <h2 className="text-5xl mt-20 font-semibold">End of Notes</h2>
-              <Button className="mb-10" onClick={() => router.back()}>
-                Go to Course Page
+          <div className="prose prose-xs md:prose-sm lg:prose-lg max-w-none">
+            <ReactMarkdown>{notes[stepCount]?.content}</ReactMarkdown>
+          </div>
+
+          <div className="flex gap-5 items-center mb-5 mt-5">
+            {stepCount > 0 && (
+              <Button variant="outline" size="sm" onClick={handlePrevious}>
+                Previous
               </Button>
-            </div>
-          )}
-        </div>
+            )}
 
-        {/* Navigation buttons */}
-        <div className="flex gap-5 items-center mb-5 mt-5">
-          {stepCount !== 0 && (
-            <Button variant="outline" size="sm" onClick={handlePrevious}>
-              Previous
+            {notes.map((_, index) => (
+              <div
+                key={index}
+                className={`w-full h-2 rounded-full ${
+                  index < stepCount ? "bg-cyan-600" : "bg-gray-200"
+                }`}
+              ></div>
+            ))}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNext}
+              disabled={stepCount >= notes.length - 1}
+            >
+              Next
             </Button>
-          )}
-
-          {notes.map((_, index) => (
-            <div
-              key={index}
-              className={`w-full h-2 rounded-full ${
-                index < stepCount ? "bg-cyan-600" : "bg-gray-200"
-              }`}
-            ></div>
-          ))}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNext}
-            disabled={stepCount >= notes.length}
-          >
-            Next
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-10 flex-col justify-center">
+          <h2 className="text-5xl mt-20 font-semibold">End of Notes</h2>
+          <Button className="mb-10" onClick={() => router.back()}>
+            Go to Course Page
           </Button>
         </div>
-      </div>
-    )
+      )}
+    </div>
   );
 }
 
