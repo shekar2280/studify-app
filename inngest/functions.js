@@ -52,7 +52,7 @@ export const CreateNewUser = inngest.createFunction(
       }
     );
 
-    return "User Authentication Successfully Completed ✅";
+    return "User Authentication Successfully Completed";
   }
 );
 
@@ -92,12 +92,9 @@ export const GenerateNotes = inngest.createFunction(
       const aiResp = await result.response.text();
 
       if (!aiResp || aiResp.trim().length === 0) {
-        console.error(`🚨 Empty AI response for Chapter ${index + 1}`);
+        console.error(`Empty AI response for Chapter ${index + 1}`);
         throw new Error("AI returned empty notes.");
       }
-
-      console.log(`📌 AI Response for Chapter ${index + 1}:`, aiResp);
-
       await db
         .update(CHAPTER_NOTES_TABLE)
         .set({ notes: aiResp, status: "Ready" })
@@ -186,7 +183,7 @@ export const generateCourseOutline = inngest.createFunction(
         existingCourse.length === 0 ||
         !existingCourse[0].courseId
       ) {
-        console.error("🚨 Course not found or courseId missing!");
+        console.error("Course not found or courseId missing!");
         throw new Error("Course not found in the database.");
       }
 
@@ -206,7 +203,7 @@ export const generateCourseOutline = inngest.createFunction(
       });
 
     } catch (error) {
-      console.error("🚨 AI Generation Error:", error.message);
+      console.error("AI Generation Error:", error.message);
       await db
         .update(STUDY_MATERIAL_TABLE)
         .set({ status: "failed" })
