@@ -22,10 +22,7 @@ function QA() {
         studyType: "Question/Answer",
       });
 
-      console.log("API Response:", result.data);
-
       const content = result.data?.content || [];
-      console.log("Content:", content);
       setQaData(content);
     } catch (error) {
       console.error("Failed to fetch QA data:", error);

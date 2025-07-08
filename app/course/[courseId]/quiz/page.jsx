@@ -19,14 +19,14 @@ function Quiz() {
   }, []);
 
   const GetQuiz = async () => {
-    setLoading(true); // Start loading
+    setLoading(true); 
     const result = await axios.post("/api/study-type", {
       courseId: courseId,
       studyType: "Quiz",
     });
     setQuizData(result.data);
     setQuiz(result.data?.content?.questions || []);
-    setLoading(false); // Stop loading
+    setLoading(false); 
   };
 
   const checkAnswer = (userAnswer, currentQuestion) => {
@@ -41,7 +41,6 @@ function Quiz() {
   return (
     <div className="mt-30 flex items-center justify-center">
       <div>
-        {/* Show loading state */}
         {loading ? (
           <div className="flex flex-col items-center justify-center h-96">
             <p className="mt-4 text-gray-500">Loading Quiz ...</p>

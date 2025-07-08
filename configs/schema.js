@@ -38,3 +38,20 @@ export const STUDY_TYPE_CONTENT_TABLE = pgTable('studyTypeContent',{
     status:varchar().default('Generating'),
     createdAt: timestamp().defaultNow()
 }) 
+
+
+// export const FRIEND_REQUEST_TABLE = pgTable("friendRequests", {
+//   id: serial().primaryKey(),
+//   senderId: varchar().notNull(),
+//   receiverId: varchar().notNull(),
+//   status: varchar().default("pending"), 
+//   createdAt: timestamp().defaultNow(),
+// });
+
+
+// export const FRIENDSHIP_TABLE = pgTable("friendships", {
+//   id: serial().primaryKey(),
+//   user1Id: varchar().notNull(),
+//   user2Id: varchar().notNull(),
+//   createdAt: timestamp().defaultNow(),
+// });

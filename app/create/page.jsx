@@ -27,19 +27,21 @@ function Create() {
 
   const GenerateCourseOutline = async () => {
     const courseId = uuidv4();
-    setLoading(true);
-    const result = await axios.post("api/generate-course-outline", {
-      courseId: courseId,
-      ...formData,
-      createdBy: user?.primaryEmailAddress?.emailAddress,
-    });
-    setTimeout(() => {
-      setLoading(false);
-      router.replace("/dashboard");
-    }, 10000);
-    // toast("Your course content is generating, Click on Refresh after sometime");
+
+    try {
+      await axios.post("/api/generate-course-outline", {
+        courseId,
+        ...formData,
+        createdBy: user?.primaryEmailAddress?.emailAddress,
+      });
+
+      router.replace(`/loading-page?courseId=${courseId}`);
+    } catch (error) {
+      console.error("Generation Error", error);
+      toast.error("Something went wrong while generating the course.");
+    }
   };
-  
+
   return (
     <div className="flex flex-col items-center p-5 md:px-24 lg:px-36 mt-20">
       <h2 className="font-bold text-4xl text-primary">
@@ -76,8 +78,8 @@ function Create() {
         {step == 0 ? (
           <Button onClick={() => setStep(step + 1)}>Next</Button>
         ) : (
-          <Button onClick={GenerateCourseOutline} disabled={loading}>
-            {loading ? <Loader className="animate-spin" /> : "Generate"}
+          <Button onClick={GenerateCourseOutline}>
+            Generate
           </Button>
         )}
       </div>

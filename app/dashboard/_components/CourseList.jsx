@@ -30,15 +30,35 @@ function CourseList() {
     startPolling(result.data.result);
   };
 
-  const startPolling = (courses) => {
-    const processingCourses = courses.filter(course => course.status === "Generating");
-    if (processingCourses.length === 0) return;
+  const handleDelete = async (courseId) => {
+    const confirmDelete = confirm(
+      "Are you sure you want to delete this course?"
+    );
+    if (!confirmDelete) return;
 
+    try {
+      await axios.delete(`/api/delete-course?courseId=${courseId}`);
+      setCourseList((prev) =>
+        prev.filter((course) => course.courseId !== courseId)
+      );
+    } catch (error) {
+      console.error("Failed to delete course:", error);
+      alert("Failed to delete course. Please try again.");
+    }
+  };
+
+  const startPolling = (courses) => {
+    const processingCourses = courses.filter(
+      (course) => course.status === "Generating"
+    );
+    if (processingCourses.length === 0) return;
     const interval = setInterval(async () => {
       const updatedCourses = await Promise.all(
         processingCourses.map(async (course) => {
           try {
-            const res = await axios.get(`/api/get-course-outline?recordId=${course.id}`);
+            const res = await axios.get(
+              `/api/get-course-outline?recordId=${course.id}`
+            );
             return res.data.status === "Ready" ? res.data : course;
           } catch (error) {
             console.error("Error fetching course status:", error);
@@ -48,17 +68,17 @@ function CourseList() {
       );
 
       setCourseList((prevCourses) =>
-        prevCourses.map((course) =>
-          updatedCourses.find((c) => c.id === course.id) || course
+        prevCourses.map(
+          (course) => updatedCourses.find((c) => c.id === course.id) || course
         )
       );
 
       if (!updatedCourses.some((c) => c.status === "Generating")) {
         clearInterval(interval);
       }
-    }, 5000); 
+    }, 5000);
   };
-  
+
   const filteredCourses =
     searchQuery.trim() === ""
       ? courseList
@@ -98,9 +118,18 @@ function CourseList() {
 
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 mt-5 gap-5">
         {!loading
-          ? filteredCourses.map((course, index) => (
-              <CourseCardItem course={course} key={index} chapters={course?.courseLayout?.chapters || []} />
-            ))
+          ? filteredCourses.map((course, index) => {
+              console.log("Course being passed to CourseCardItem:", course); 
+
+              return (
+                <CourseCardItem
+                  course={course}
+                  key={index}
+                  onDelete={handleDelete}
+                  chapters={course?.courseLayout?.chapters || []}
+                />
+              );
+            })
           : [1, 2, 3, 4, 5, 6].map((item, index) => (
               <div
                 key={index}

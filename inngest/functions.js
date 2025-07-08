@@ -65,7 +65,7 @@ export const GenerateNotes = inngest.createFunction(
     console.log("📌 Received Course Data:", JSON.stringify(course, null, 2));
 
     if (!course || !course.courseId || !course.courseLayout?.chapters) {
-      console.error("🚨 Missing course data!");
+      console.error("Missing course data!");
       throw new Error("Invalid course data received.");
     }
 
@@ -84,9 +84,37 @@ export const GenerateNotes = inngest.createFunction(
         })
         .returning({ id: CHAPTER_NOTES_TABLE.id });
 
-      const PROMPT = `Generate detailed notes for the chapter: ${JSON.stringify(
-        chapter
-      )}`;
+      const PROMPT = `
+You are an AI assistant that creates structured course notes.
+
+Generate structured, clean JSON notes for this chapter. Strict rules:
+
+- Do NOT use markdown (\`\`\`) or HTML tags anywhere.
+- Do NOT wrap code examples in backticks.
+- Return only valid JSON.
+- Each detail string should be plain text. If showing code, format as inline string, e.g., "export async function getStaticProps() { return { props: {} }; }"
+
+Chapter data:
+${JSON.stringify(chapter, null, 2)}
+
+The JSON format must be:
+{
+  "chapter_name": "string",
+  "chapter_summary": "string",
+  "topics": [
+    {
+      "topic_title": "string",
+      "content": [
+        {
+          "subtopic": "string",
+          "details": ["string", "string", ...]
+        }
+      ]
+    }
+  ]
+}
+`;
+
       const result = await generateNotesAiModel.sendMessage(PROMPT);
 
       const aiResp = await result.response.text();
@@ -107,6 +135,11 @@ export const GenerateNotes = inngest.createFunction(
       for (let index = 0; index < Chapters.length; index++) {
         await generateChapterNotes(Chapters[index], index);
       }
+      await db
+        .update(STUDY_MATERIAL_TABLE)
+        .set({ status: "Ready" })
+        .where(eq(STUDY_MATERIAL_TABLE.courseId, course.courseId));
+
       return "Completed";
     });
   }
@@ -189,7 +222,7 @@ export const generateCourseOutline = inngest.createFunction(
 
       await db
         .update(STUDY_MATERIAL_TABLE)
-        .set({ courseLayout: aiResult, status: "Ready" })
+        .set({ courseLayout: aiResult, status: "Generating" })
         .where(eq(STUDY_MATERIAL_TABLE.id, recordId));
 
       await inngest.send({
@@ -201,7 +234,6 @@ export const generateCourseOutline = inngest.createFunction(
           },
         },
       });
-
     } catch (error) {
       console.error("AI Generation Error:", error.message);
       await db

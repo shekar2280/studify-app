@@ -4,6 +4,10 @@ import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
+import { FaArrowRightLong } from "react-icons/fa6";
+import { FaArrowLeftLong } from "react-icons/fa6";
+import rehypeHighlight from "rehype-highlight";
+import { SiBookstack } from "react-icons/si";
 
 function parseNotes(notesString) {
   if (typeof notesString !== "string") return "Invalid content";
@@ -13,43 +17,42 @@ function parseNotes(notesString) {
     let content = "";
 
     if (parsed.chapter_name) {
-      content += `## ${parsed.emoji || ""} ${parsed.chapter_name}\n\n`;
+      content += `## ${parsed.chapter_name}\n\n`;
     }
+
     if (parsed.chapter_summary) {
       content += `${parsed.chapter_summary}\n\n`;
     }
 
-    const sections = parsed.topics || parsed.subtopics || [];
+    const topics = parsed.topics || [];
 
-    if (Array.isArray(sections)) {
-      sections.forEach((section) => {
-        const sectionTitle = section.title || section.topic_title;
-        if (sectionTitle) {
-          content += `### ${sectionTitle}\n\n`;
-        }
+    for (const topic of topics) {
+      if (topic.topic_title) {
+        content += `### ${topic.topic_title}\n\n`;
+      }
 
-        if (typeof section.content === "string" && section.content.trim() !== "") {
-          content += `${section.content}\n\n`;
-        } else if (Array.isArray(section.content)) {
-          section.content.forEach((line) => {
-            if (line.startsWith("*") || line.startsWith("-")) {
-              content += `${line}\n`; 
-            } else if (line.includes("`")) {
-              content += `\n\`\`\`\n${line.replace(/`/g, "")}\n\`\`\`\n`; 
-            } else {
-              content += `${line}\n\n`; 
+      if (Array.isArray(topic.content)) {
+        for (const sub of topic.content) {
+          if (sub.subtopic) {
+            content += `**${sub.subtopic}**\n\n`;
+          }
+
+          if (Array.isArray(sub.details)) {
+            for (const detail of sub.details) {
+              const isCode =
+                detail.includes("function") ||
+                detail.includes("{") ||
+                detail.includes("=>");
+              if (isCode) {
+                content += `\n\`\`\`js\n${detail}\n\`\`\`\n\n`;
+              } else {
+                content += `- ${detail}\n`;
+              }
             }
-          });
+            content += `\n`;
+          }
         }
-
-       
-        if (Array.isArray(section.notes) && section.notes.length > 0) {
-          section.notes.forEach((note) => {
-            content += `- ${note}\n`;
-          });
-          content += `\n`;
-        }
-      });
+      }
     }
 
     return content.trim() || "No content available";
@@ -58,7 +61,6 @@ function parseNotes(notesString) {
     return "Invalid content format";
   }
 }
-
 
 function ViewNotes() {
   const { courseId } = useParams();
@@ -73,8 +75,6 @@ function ViewNotes() {
         studyType: "notes",
       });
 
-      console.log("Raw API Response:", data);
-
       const sortedNotes = data
         .map((item) => ({
           chapterId: item.chapterId,
@@ -82,7 +82,6 @@ function ViewNotes() {
         }))
         .sort((a, b) => a.chapterId - b.chapterId);
 
-      console.log("Processed Notes:", sortedNotes);
       setNotes(sortedNotes);
     } catch (error) {
       console.error("Error fetching notes:", error);
@@ -97,8 +96,10 @@ function ViewNotes() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const notesWithEnd = [...notes, { chapterId: -1, content: null }];
+
   const handleNext = () => {
-    if (stepCount < notes.length - 1) {
+    if (stepCount < notesWithEnd.length - 1) {
       setStepCount((prev) => prev + 1);
       scrollToTop();
     }
@@ -113,44 +114,56 @@ function ViewNotes() {
 
   return (
     <div>
-      {notes.length > 0 ? (
-        <div className="mt-10">
-          <div className="prose prose-xs md:prose-sm lg:prose-lg max-w-none">
-            <ReactMarkdown>{notes[stepCount]?.content}</ReactMarkdown>
-          </div>
-
-          <div className="flex gap-5 items-center mb-5 mt-5">
-            {stepCount > 0 && (
-              <Button variant="outline" size="sm" onClick={handlePrevious}>
-                Previous
-              </Button>
-            )}
-
-            {notes.map((_, index) => (
-              <div
-                key={index}
-                className={`w-full h-2 rounded-full ${
-                  index < stepCount ? "bg-cyan-600" : "bg-gray-200"
-                }`}
-              ></div>
-            ))}
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleNext}
-              disabled={stepCount >= notes.length - 1}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      ) : (
+      {notes.length === 0 ? (
         <div className="flex items-center gap-10 flex-col justify-center">
-          <h2 className="text-5xl mt-20 font-semibold">End of Notes</h2>
+          <h2 className="text-5xl mt-20 font-semibold"> No Notes Found</h2>
           <Button className="mb-10" onClick={() => router.back()}>
             Go to Course Page
           </Button>
+        </div>
+      ) : (
+        <div className="mt-10">
+          {stepCount === notesWithEnd.length - 1 ? (
+            <div className="text-center flex flex-col items-center gap-5 min-h-[300px] justify-center">
+              <h2 className="mt-10 text-6xl font-semibold">End of Notes</h2>
+              <Button className="mt-4" onClick={() => router.back()}>
+                Go to Course Page
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="prose prose-xs md:prose-sm lg:prose-lg max-w-none">
+                <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+                  {notesWithEnd[stepCount]?.content}
+                </ReactMarkdown>
+              </div>
+
+              <div>
+                {stepCount > 0 && (
+                  <Button
+                    variant="outline"
+                    className="fixed top-1/2 left-4 transform -translate-y-1/2 ml-6"
+                    onClick={handlePrevious}
+                  >
+                    <FaArrowLeftLong />
+                  </Button>
+                )}
+
+                {notesWithEnd.map((_, index) => (
+                  <div key={index}></div>
+                ))}
+
+                <Button
+                  variant="outline"
+                  className="fixed top-1/2 right-4 transform -translate-y-1/2 mr-6"
+                  onClick={handleNext}
+                  disabled={stepCount >= notesWithEnd.length - 1}
+                >
+                  <FaArrowRightLong />
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

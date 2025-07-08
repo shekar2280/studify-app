@@ -31,7 +31,7 @@ function Course() {
     );
 
   return (
-    <div>
+    <div className="mb-10">
       <CourseIntroCard course={course} />
       <StudyMaterialSection courseId={courseId} course={course} />
       <ChapterList course={course} />

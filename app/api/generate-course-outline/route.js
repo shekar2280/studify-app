@@ -7,8 +7,6 @@ export async function POST(req) {
     try {
         const { courseId, topic, courseType, difficultyLevel, createdBy } = await req.json();
         
-        console.log("Received request with data:", { courseId, topic, courseType, difficultyLevel, createdBy });
-
         const dbResult = await db.insert(STUDY_MATERIAL_TABLE).values({
             courseId,
             courseType,

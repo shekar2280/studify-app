@@ -27,7 +27,7 @@ function Flashcards() {
   useEffect(() => {
     if (!api) return;
     api.on("select", (index) => {
-      setFlippedStates({}); // Reset all cards when switching
+      setFlippedStates({}); 
       setCurrentIndex(index);
     });
   }, [api]);
