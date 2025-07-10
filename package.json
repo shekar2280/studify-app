@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"next dev\" \"node socket-server.js\" \"inngest dev\"",
-    "build": "next build",
+    "build": "next build && echo Build Complete",
     "start": "next start",
     "lint": "next lint"
   },
