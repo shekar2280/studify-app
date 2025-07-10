@@ -78,7 +78,7 @@ function Create() {
         {step == 0 ? (
           <Button onClick={() => setStep(step + 1)}>Next</Button>
         ) : (
-          <Button onClick={GenerateCourseOutline}>
+          <Button onClick={GenerateCourseOutline}  className="hover:bg-cyan-600/80 transition-colors duration-200">
             Generate
           </Button>
         )}
