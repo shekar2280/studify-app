@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"next dev\" \"node socket-server.js\" \"inngest dev\"",
-    "build": "NODE_OPTIONS=--max-old-space-size=512 next build && echo Build Complete",
-    "start": "next start",
+    "build": "NODE_OPTIONS=--max-old-space-size=512 next build",
+    "start": "NODE_ENV=production node server.js",
     "lint": "next lint"
   },
   "dependencies": {
