@@ -6,33 +6,45 @@ import { useQuery } from "@tanstack/react-query";
 import CourseIntroCard from "./_components/CourseIntroCard";
 import StudyMaterialSection from "./_components/StudyMaterialSection";
 import ChapterList from "./_components/ChapterList";
+import { useUser } from "@clerk/nextjs";
 
-const fetchCourse = async (courseId) => {
-  const result = await axios.get("/api/courses?courseId=" + courseId);
-  return result.data.result;
+const fetchCourse = async (courseId, userId) => {
+  const courseRes = await axios.get("/api/courses?courseId=" + courseId);
+  console.log("Course Res: ", courseRes);
+  const progressRes = await axios.get(
+    `/api/progress?courseId=${courseId}&userId=${userId}`
+  );
+  console.log("Progress: ", progressRes);
+
+  return {
+    ...courseRes.data.result,
+    progress: progressRes.data,
+  };
 };
 
 function Course() {
+  const { user } = useUser();
   const { courseId } = useParams();
 
   const { data: course, isLoading } = useQuery({
-    queryKey: ["course", courseId], 
-    queryFn: () => fetchCourse(courseId),
-    staleTime: 1000 * 60 * 5, 
+    queryKey: ["course", courseId, user?.id],
+    queryFn: () => fetchCourse(courseId, user?.id),
+    enabled: !!user?.id,
   });
 
-  if (isLoading)
-    return (
-      <div className="flex justify-center items-center mt-60">
-        <div className="relative w-10 h-10 border-4 border-cyan-600 border-solid animate-spin rounded-full">
-          <div className="absolute inset-0 bg-white w-1/2 h-1/2 animate-pulse"></div>
-        </div>
+  if (isLoading || !course)
+  return (
+    <div className="flex justify-center items-center mt-60">
+      <div className="flex h-[300px]">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-cyan-600" />
       </div>
-    );
+    </div>
+  );
+
 
   return (
     <div className="mb-10">
-      <CourseIntroCard course={course} />
+      <CourseIntroCard course={course} progress={course.progress} />
       <StudyMaterialSection courseId={courseId} course={course} />
       <ChapterList course={course} />
     </div>

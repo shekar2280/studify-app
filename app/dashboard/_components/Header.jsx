@@ -6,7 +6,7 @@ import React from "react";
 
 function Header() {
   return (
-    <div className="p-5 shadow-md flex justify-between items-center">
+    <div className="p-4 shadow-md flex justify-between items-center">
       <Link href={"/dashboard"}>
         <Image src={"/icons8-logo.svg"} alt="logo" width={40} height={40} />
       </Link>

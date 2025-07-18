@@ -40,6 +40,18 @@ export const STUDY_TYPE_CONTENT_TABLE = pgTable('studyTypeContent',{
 }) 
 
 
+export const USER_COURSE_PROGRESS_TABLE = pgTable("userCourseProgress", {
+  id: serial().primaryKey(),
+  userId: varchar().notNull(),        
+  courseId: varchar().notNull(),      
+  notesCompleted: boolean().default(false),
+  flashcardsCompleted: boolean().default(false),
+  quizCompleted: boolean().default(false),
+  qaCompleted: boolean().default(false),
+  updatedAt: timestamp().defaultNow(),
+});
+
+
 // export const FRIEND_REQUEST_TABLE = pgTable("friendRequests", {
 //   id: serial().primaryKey(),
 //   senderId: varchar().notNull(),

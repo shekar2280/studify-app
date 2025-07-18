@@ -4,12 +4,14 @@ import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import QACardItem from "./_components/QACardItem";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@clerk/nextjs";
 
 function QA() {
   const { courseId } = useParams();
-  const [qaData, setQaData] = useState([]); 
+  const [qaData, setQaData] = useState([]);
   const [currentTopic, setCurrentTopic] = useState(0);
   const route = useRouter();
+  const { user } = useUser();
 
   useEffect(() => {
     GetQA();
@@ -34,7 +36,7 @@ function QA() {
       top: 0,
       behavior: "smooth",
     });
-  }
+  };
 
   const goToNextTopic = () => {
     if (currentTopic + 1 < qaData.length) {
@@ -76,18 +78,31 @@ function QA() {
             {currentTopic + 1 < qaData.length ? (
               <Button onClick={goToNextTopic}>Next </Button>
             ) : (
-              <Button onClick={() => route.back()}>Go to Course Page</Button>
+              <Button
+                onClick={async () => {
+                  try {
+                    await axios.post("/api/progress", {
+                      userId: user?.id,
+                      courseId,
+                      type: "qa",
+                      value: true,
+                    });
+                  } catch (error) {
+                    console.error("Failed to update progress:", error);
+                  } finally {
+                    route.back();
+                  }
+                }}
+              >
+                Go to Course Page
+              </Button>
             )}
           </div>
-
-          
-
-          
         </>
       ) : (
         <div className="flex flex-col items-center justify-center h-96">
-            <p className="mt-4 text-gray-500">Loading QA...</p>
-          </div>
+          <p className="mt-4 text-gray-500">Loading QA...</p>
+        </div>
       )}
     </div>
   );

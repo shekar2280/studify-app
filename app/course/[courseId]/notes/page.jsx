@@ -8,6 +8,7 @@ import { FaArrowRightLong } from "react-icons/fa6";
 import { FaArrowLeftLong } from "react-icons/fa6";
 import rehypeHighlight from "rehype-highlight";
 import { SiBookstack } from "react-icons/si";
+import { useUser } from "@clerk/nextjs";
 
 function parseNotes(notesString) {
   if (typeof notesString !== "string") return "Invalid content";
@@ -66,10 +67,13 @@ function ViewNotes() {
   const { courseId } = useParams();
   const [notes, setNotes] = useState([]);
   const [stepCount, setStepCount] = useState(0);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { user } = useUser();
 
   const fetchNotes = useCallback(async () => {
     try {
+      setLoading(true);
       const { data } = await axios.post("/api/study-type", {
         courseId,
         studyType: "notes",
@@ -85,6 +89,8 @@ function ViewNotes() {
       setNotes(sortedNotes);
     } catch (error) {
       console.error("Error fetching notes:", error);
+    } finally {
+      setLoading(false);
     }
   }, [courseId]);
 
@@ -114,7 +120,11 @@ function ViewNotes() {
 
   return (
     <div>
-      {notes.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center h-[300px]">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-cyan-600" />
+        </div>
+      ) : notes.length === 0 ? (
         <div className="flex items-center gap-10 flex-col justify-center">
           <h2 className="text-5xl mt-20 font-semibold"> No Notes Found</h2>
           <Button className="mb-10" onClick={() => router.back()}>
@@ -126,7 +136,23 @@ function ViewNotes() {
           {stepCount === notesWithEnd.length - 1 ? (
             <div className="text-center flex flex-col items-center gap-5 min-h-[300px] justify-center">
               <h2 className="mt-10 text-6xl font-semibold">End of Notes</h2>
-              <Button className="mt-4" onClick={() => router.back()}>
+              <Button
+                className="mt-4"
+                onClick={async () => {
+                  try {
+                    await axios.post("/api/progress", {
+                      userId: user?.id,
+                      courseId,
+                      type: "notes",
+                      value: true,
+                    });
+                  } catch (error) {
+                    console.error("Failed to update progress:", error);
+                  } finally {
+                    router.back();
+                  }
+                }}
+              >
                 Go to Course Page
               </Button>
             </div>

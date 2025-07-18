@@ -1,12 +1,18 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { useUser } from "@clerk/nextjs";
+import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import { FaBook, FaTrashAlt } from "react-icons/fa";
+import { FaTrashAlt } from "react-icons/fa";
 
-function CourseCardItem({ course, onDelete }) {
+const CourseCardItem = ({ course, onDelete }) => {
+  const { user } = useUser();
   const [formattedDate, setFormattedDate] = useState("");
+  const [progress, setProgress] = useState(null);
 
   useEffect(() => {
     const localDate = new Date(course.createdAt).toLocaleDateString("en-GB", {
@@ -16,6 +22,32 @@ function CourseCardItem({ course, onDelete }) {
     });
     setFormattedDate(localDate);
   }, [course.createdAt]);
+
+  useEffect(() => {
+    const fetchProgress = async () => {
+      if (!user?.id) return;
+      try {
+        const res = await axios.get(
+          `/api/progress?courseId=${course.courseId}&userId=${user.id}`
+        );
+        setProgress(res.data);
+      } catch (err) {
+        console.error("Error fetching progress:", err);
+      }
+    };
+
+    fetchProgress();
+  }, [user?.id, course.courseId]);
+
+  const completedTasks = [
+    progress?.notesCompleted,
+    progress?.flashcardsCompleted,
+    progress?.quizCompleted,
+    progress?.qaCompleted,
+  ].filter(Boolean).length;
+
+  const totalTasks = 4;
+  const progressValue = (completedTasks / totalTasks) * 100;
 
   const handleDelete = () => {
     onDelete(course.courseId);
@@ -40,7 +72,10 @@ function CourseCardItem({ course, onDelete }) {
         </p>
 
         <div className="mt-3">
-          <Progress value={0} />
+          <Progress value={progressValue} />
+          <p className="text-sm text-muted-foreground mt-1">
+            {Math.round(progressValue)}% completed
+          </p>
         </div>
 
         <div className="mt-4 flex justify-between items-center">
@@ -54,6 +89,6 @@ function CourseCardItem({ course, onDelete }) {
       </div>
     </div>
   );
-}
+};
 
 export default CourseCardItem;

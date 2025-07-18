@@ -11,6 +11,9 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@clerk/nextjs";
+
+
 
 function Flashcards() {
   const { courseId } = useParams();
@@ -19,6 +22,7 @@ function Flashcards() {
   const [flippedStates, setFlippedStates] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [api, setApi] = useState();
+  const { user } = useUser();
 
   useEffect(() => {
     GetFlashcards();
@@ -27,7 +31,7 @@ function Flashcards() {
   useEffect(() => {
     if (!api) return;
     api.on("select", (index) => {
-      setFlippedStates({}); 
+      setFlippedStates({});
       setCurrentIndex(index);
     });
   }, [api]);
@@ -68,7 +72,23 @@ function Flashcards() {
               <CarouselItem className="flex items-center justify-center">
                 <div className="text-center flex flex-col items-center gap-5">
                   <h2 className="text-4xl font-semibold">End of Flashcards</h2>
-                  <Button className="mt-4" onClick={() => route.back()}>
+                  <Button
+                    className="mt-4"
+                    onClick={async () => {
+                      try {
+                        await axios.post("/api/progress", {
+                          userId: user?.id,
+                          courseId,
+                          type: "flashcards",
+                          value: true,
+                        });
+                      } catch (error) {
+                        console.error("Failed to update progress:", error);
+                      } finally {
+                        route.back();
+                      }
+                    }}
+                  >
                     Go to Course Page
                   </Button>
                 </div>
@@ -78,7 +98,7 @@ function Flashcards() {
             <CarouselNext />
           </Carousel>
         ) : (
-          <div className="flex flex-col items-center justify-center h-96">
+          <div className="flex flex-col items-center justify-center h-96 ">
             <p className="mt-4 text-gray-500">Loading Flashcards...</p>
           </div>
         )}

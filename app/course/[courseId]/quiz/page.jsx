@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import QuizCardItem from "./_components/QuizCardItem";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@clerk/nextjs";
 
 function Quiz() {
   const { courseId } = useParams();
@@ -13,20 +14,21 @@ function Quiz() {
   const [correctAns, setCorrectAns] = useState(null);
   const [loading, setLoading] = useState(true);
   const route = useRouter();
+  const { user } = useUser();
 
   useEffect(() => {
     GetQuiz();
   }, []);
 
   const GetQuiz = async () => {
-    setLoading(true); 
+    setLoading(true);
     const result = await axios.post("/api/study-type", {
       courseId: courseId,
       studyType: "Quiz",
     });
     setQuizData(result.data);
     setQuiz(result.data?.content?.questions || []);
-    setLoading(false); 
+    setLoading(false);
   };
 
   const checkAnswer = (userAnswer, currentQuestion) => {
@@ -77,7 +79,23 @@ function Quiz() {
           !loading && (
             <div className="flex items-center gap-10 flex-col justify-center">
               <h2 className="text-5xl mt-20 font-semibold">End of Quiz</h2>
-              <Button className="mb-10" onClick={() => route.back()}>
+              <Button
+                className="mb-10"
+                onClick={async () => {
+                  try {
+                    await axios.post("/api/progress", {
+                      userId: user?.id,
+                      courseId,
+                      type: "quiz",
+                      value: true,
+                    });
+                  } catch (error) {
+                    console.error("Failed to update progress:", error);
+                  } finally {
+                    route.back();
+                  }
+                }}
+              >
                 Go to Course Page
               </Button>
             </div>
