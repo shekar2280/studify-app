@@ -1,13 +1,12 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { FaArrowRightLong } from "react-icons/fa6";
-import { FaArrowLeftLong } from "react-icons/fa6";
+import { FaArrowRightLong, FaArrowLeftLong } from "react-icons/fa6";
 import rehypeHighlight from "rehype-highlight";
-import { SiBookstack } from "react-icons/si";
 import { useUser } from "@clerk/nextjs";
 
 function parseNotes(notesString) {
@@ -26,31 +25,17 @@ function parseNotes(notesString) {
     }
 
     const topics = parsed.topics || [];
-
     for (const topic of topics) {
-      if (topic.topic_title) {
-        content += `### ${topic.topic_title}\n\n`;
-      }
-
+      if (topic.topic_title) content += `### ${topic.topic_title}\n\n`;
       if (Array.isArray(topic.content)) {
         for (const sub of topic.content) {
-          if (sub.subtopic) {
-            content += `**${sub.subtopic}**\n\n`;
-          }
-
+          if (sub.subtopic) content += `**${sub.subtopic}**\n\n`;
           if (Array.isArray(sub.details)) {
             for (const detail of sub.details) {
-              const isCode =
-                detail.includes("function") ||
-                detail.includes("{") ||
-                detail.includes("=>");
-              if (isCode) {
-                content += `\n\`\`\`js\n${detail}\n\`\`\`\n\n`;
-              } else {
-                content += `- ${detail}\n`;
-              }
+              const isCode = detail.includes("function") || detail.includes("{") || detail.includes("=>");
+              if (isCode) content += `\n\`\`\`js\n${detail}\n\`\`\`\n\n`;
+              else content += `- ${detail}\n`;
             }
-            content += `\n`;
           }
         }
       }
@@ -65,132 +50,113 @@ function parseNotes(notesString) {
 
 function ViewNotes() {
   const { courseId } = useParams();
-  const [notes, setNotes] = useState([]);
-  const [stepCount, setStepCount] = useState(0);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { user } = useUser();
 
-  const fetchNotes = useCallback(async () => {
+  const [stepCount, setStepCount] = useState(1);
+  const [noteContent, setNoteContent] = useState("");
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [isEnd, setIsEnd] = useState(false);
+
+  const fetchNote = async (chapterId, isInitial = false) => {
     try {
-      setLoading(true);
-      const { data } = await axios.post("/api/study-type", {
-        courseId,
-        studyType: "notes",
+      if (isInitial) setInitialLoading(true);
+      const res = await axios.get("/api/study-type/chapter-notes", {
+        params: { courseId, chapterId },
       });
 
-      const sortedNotes = data
-        .map((item) => ({
-          chapterId: item.chapterId,
-          content: parseNotes(item.notes),
-        }))
-        .sort((a, b) => a.chapterId - b.chapterId);
-
-      setNotes(sortedNotes);
-    } catch (error) {
-      console.error("Error fetching notes:", error);
+      if (!res.data.content) {
+        setIsEnd(true);
+        setNoteContent("");
+      } else {
+        setNoteContent(parseNotes(res.data.content));
+        setIsEnd(false);
+      }
+    } catch (err) {
+      console.error("❌ Failed to fetch chapter note:", err);
+      setNoteContent("Error loading content.");
     } finally {
-      setLoading(false);
+      if (isInitial) setInitialLoading(false);
     }
-  }, [courseId]);
+  };
 
   useEffect(() => {
-    fetchNotes();
-  }, [fetchNotes]);
+    if (stepCount === 1) {
+      fetchNote(stepCount, true);
+    } else {
+      fetchNote(stepCount);
+    }
+  }, [stepCount]);
 
-  const scrollToTop = () => {
+  const handleNext = () => {
+    setStepCount((prev) => prev + 1);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const notesWithEnd = [...notes, { chapterId: -1, content: null }];
-
-  const handleNext = () => {
-    if (stepCount < notesWithEnd.length - 1) {
-      setStepCount((prev) => prev + 1);
-      scrollToTop();
-    }
-  };
-
   const handlePrevious = () => {
-    if (stepCount > 0) {
+    if (stepCount > 1) {
       setStepCount((prev) => prev - 1);
-      scrollToTop();
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   return (
-    <div>
-      {loading ? (
+    <div className="mt-10">
+      {initialLoading ? (
         <div className="flex items-center justify-center h-[300px]">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-cyan-600" />
         </div>
-      ) : notes.length === 0 ? (
-        <div className="flex items-center gap-10 flex-col justify-center">
-          <h2 className="text-5xl mt-20 font-semibold"> No Notes Found</h2>
-          <Button className="mb-10" onClick={() => router.back()}>
+      ) : isEnd ? (
+        <div className="text-center flex flex-col items-center gap-5 min-h-[300px] justify-center">
+          <h2 className="mt-10 text-6xl font-semibold">End of Notes</h2>
+          <Button
+            className="mt-4"
+            onClick={async () => {
+              try {
+                await axios.post("/api/progress", {
+                  userId: user?.id,
+                  courseId,
+                  type: "notes",
+                  value: true,
+                });
+              } catch (error) {
+                console.error("Failed to update progress:", error);
+              } finally {
+                router.back();
+              }
+            }}
+          >
             Go to Course Page
           </Button>
         </div>
       ) : (
-        <div className="mt-10">
-          {stepCount === notesWithEnd.length - 1 ? (
-            <div className="text-center flex flex-col items-center gap-5 min-h-[300px] justify-center">
-              <h2 className="mt-10 text-6xl font-semibold">End of Notes</h2>
+        <>
+          <div className="prose prose-sm md:prose-md lg:prose-lg max-w-none">
+            <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+              {noteContent}
+            </ReactMarkdown>
+          </div>
+
+          <div>
+            {stepCount > 1 && (
               <Button
-                className="mt-4"
-                onClick={async () => {
-                  try {
-                    await axios.post("/api/progress", {
-                      userId: user?.id,
-                      courseId,
-                      type: "notes",
-                      value: true,
-                    });
-                  } catch (error) {
-                    console.error("Failed to update progress:", error);
-                  } finally {
-                    router.back();
-                  }
-                }}
+                variant="outline"
+                className="fixed top-1/2 left-4 transform -translate-y-1/2 ml-6"
+                onClick={handlePrevious}
               >
-                Go to Course Page
+                <FaArrowLeftLong />
               </Button>
-            </div>
-          ) : (
-            <>
-              <div className="prose prose-xs md:prose-sm lg:prose-lg max-w-none">
-                <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
-                  {notesWithEnd[stepCount]?.content}
-                </ReactMarkdown>
-              </div>
-
-              <div>
-                {stepCount > 0 && (
-                  <Button
-                    variant="outline"
-                    className="fixed top-1/2 left-4 transform -translate-y-1/2 ml-6"
-                    onClick={handlePrevious}
-                  >
-                    <FaArrowLeftLong />
-                  </Button>
-                )}
-
-                {notesWithEnd.map((_, index) => (
-                  <div key={index}></div>
-                ))}
-
-                <Button
-                  variant="outline"
-                  className="fixed top-1/2 right-4 transform -translate-y-1/2 mr-6"
-                  onClick={handleNext}
-                  disabled={stepCount >= notesWithEnd.length - 1}
-                >
-                  <FaArrowRightLong />
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
+            )}
+            <Button
+              variant="outline"
+              className="fixed top-1/2 right-4 transform -translate-y-1/2 mr-6"
+              onClick={handleNext}
+              disabled={isEnd}
+            >
+              <FaArrowRightLong />
+            </Button>
+          </div>
+        </>
       )}
     </div>
   );

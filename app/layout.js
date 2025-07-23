@@ -1,6 +1,6 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
-import { Outfit } from "next/font/google";
+import { Outfit, Poppins } from "next/font/google";
 import Provider from "./provider";
 import { Toaster } from "@/components/ui/sonner";
 import QueryProvider from "./provider/QueryProvider";
@@ -14,12 +14,16 @@ export const metadata = {
 };
 
 const outfit = Outfit({ subsets: ["latin"] });
+const poppins = Poppins({ 
+  subsets: ["latin"],
+  weight: ["400","700"],
+});
 
 export default function RootLayout({ children }) {
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={outfit.className}>
+        <body className={poppins.className} >
           <QueryProvider>
             <Provider>{children}</Provider>
           </QueryProvider>

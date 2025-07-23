@@ -69,11 +69,11 @@ function MaterialCardItem({ item, studyTypeContent, course, refreshData }) {
       <h2 className="font-medium mt-3">{item.name}</h2>
 
       {!isReadyFromParent ? (
-        <Button className="mt-3 w-full" variant="outline" onClick={GenerateContent} disabled={loading}>
+        <Button className="mt-3 w-full text-sm" variant="outline" onClick={GenerateContent} disabled={loading}>
           {loading ? <RefreshCcw className="animate-spin" /> : "Generate"}
         </Button>
       ) : (
-        <Button className="mt-3 w-full" variant="outline">
+        <Button className="mt-3 w-full text-sm" variant="outline">
           View
         </Button>
       )}

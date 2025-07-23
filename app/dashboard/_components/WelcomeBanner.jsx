@@ -8,7 +8,7 @@ function WelcomeBanner() {
   const { user } = useUser();
 
   return (
-    <div className="p-5 bg-cyan-600 w-full text-white rounded-lg flex items-center gap-6">
+    <div className="p-5 bg-gradient-to-tr from-black to-cyan-400 w-full text-white rounded-lg flex items-center gap-6">
       <div className="w-[160px] h-[160px]">
         <Lottie animationData={animationData} loop autoplay />
       </div>

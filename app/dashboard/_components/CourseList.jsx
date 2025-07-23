@@ -5,6 +5,7 @@ import axios from "axios";
 import CourseCardItem from "./CourseCardItem";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Search } from "lucide-react";
+import { poppins } from "@/app/fonts";
 
 function CourseList() {
   const { user } = useUser();
@@ -97,7 +98,7 @@ function CourseList() {
             <input
               type="text"
               placeholder="Search..."
-              className="outline-none w-60 pl-2 text-xl text-gray-700"
+              className={`w-60 pl-2 font-medium text-lg bg-transparent focus:outline-none focus:ring-0 focus:border-transparent  text-gray-700 ${poppins.className}`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />

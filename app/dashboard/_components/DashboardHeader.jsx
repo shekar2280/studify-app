@@ -12,13 +12,19 @@ export default function DashboardHeader() {
   const [showChat, setShowChat] = useState(false);
 
   return (
-    <div className="p-5 flex justify-end gap-5">
+    <div className="p-5 flex justify-end gap-5 bg-gray-100">
       <IoNotifications size={30} />
-      <FiMessageSquare
-        size={30}
-        onClick={() => setShowChat((prev) => !prev)}
-        className="cursor-pointer"
-      />
+      <div className="flex flex-row">
+        <FiMessageSquare
+          size={30}
+          onClick={() => setShowChat((prev) => !prev)}
+          className=" cursor-pointer"
+        />
+        <span className="relative inline-flex size-3 rounded-full bg-red-500">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75">
+        </span>
+        </span>
+      </div>
       <UserButton />
       {showChat && <ChatBox />}
     </div>

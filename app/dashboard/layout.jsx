@@ -11,7 +11,7 @@ function DashboardLayout({ children }) {
   const isCollapsed = collapsedRoutes.includes(path);
 
   return (
-    <div className="flex">
+    <div className="flex bg-gray-100">
       <div className={`fixed hidden md:block ${isCollapsed ? "w-20" : "w-64"}`}>
         <SideBar collapsed={isCollapsed} />
       </div>
