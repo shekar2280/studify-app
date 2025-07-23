@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { FaTrashAlt } from "react-icons/fa";
+import { poppins } from "@/app/fonts";
 
 const CourseCardItem = ({ course, onDelete }) => {
   const { user } = useUser();
@@ -54,26 +55,28 @@ const CourseCardItem = ({ course, onDelete }) => {
   };
 
   return (
-    <div className="border rounded-lg shadow-md p-5 h-[250px] flex flex-col justify-between">
+    <div className="relative border rounded-lg shadow-md p-5 h-[250px] flex flex-col justify-between bg-cover bg-center text-white"
+    style={{ backgroundImage: `url('/course-card.jpg')` }}
+    >
       <div>
         <div className="flex justify-between items-center">
-          <h2 className="text-[15px] font-medium">
-            Course Type: {course?.courseType}
+          <h2 className={`text-[15px] font-normal ${poppins.className} text-black`}>
+            Course Type: <span className="text-red-500">{course?.courseType}</span>
           </h2>
           <h2 className="text-[10px] p-1 px-2 rounded-full bg-cyan-600 text-white">
             {formattedDate || "Loading..."}
           </h2>
         </div>
-        <h2 className="mt-3 font-medium line-clamp-1 text-lg">
+        <h2 className={`mt-3 font-semibold line-clamp-1 text-lg ${poppins.className} text-black `}>
           {course?.courseLayout?.course_name}
         </h2>
-        <p className="text-sm line-clamp-2 text-gray-500 mt-2">
+        <p className="text-sm line-clamp-2 text-white mt-2">
           {course?.courseLayout?.course_summary}
         </p>
 
         <div className="mt-3">
           <Progress value={progressValue} />
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1 text-white">
             {Math.round(progressValue)}% completed
           </p>
         </div>

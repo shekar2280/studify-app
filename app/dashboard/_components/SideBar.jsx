@@ -11,6 +11,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
+import { Merriweather } from "next/font/google";
+
+const merriweather = Merriweather({
+  subsets: ["latin"],
+  weight: ["400", "700"], 
+});
 
 function SideBar({ collapsed }) {
   const MenuList = [
@@ -22,11 +28,15 @@ function SideBar({ collapsed }) {
   const path = usePathname();
 
   return (
-    <div className="h-screen shadow-md p-5 flex flex-col items-center">
-      <div className="flex gap-2 items-center justify-center">
+    <div className="h-screen shadow-md p-5 flex flex-col items-center bg-gray-100">
+      <div className="flex gap-2 items-center justify-start w-full">
         <Image src={"/icons8-logo.svg"} alt="logo" width={40} height={40} />
         {!collapsed && (
-          <h2 className="font-bold text-2xl text-cyan-700">Studify</h2>
+          <h2
+            className={`text-2xl text-cyan-700 italic font-bold ${merriweather.className}`}
+          >
+            Studify
+          </h2>
         )}
       </div>
 
@@ -38,12 +48,16 @@ function SideBar({ collapsed }) {
         </Link>
       )}
 
-      <div className={`mt-10 w-full ${collapsed ? "flex flex-col items-center" : ""}`}>
+      <div
+        className={`mt-10 w-full ${
+          collapsed ? "flex flex-col items-center" : ""
+        }`}
+      >
         {MenuList.map((menu, index) => (
           <Link href={menu.path} key={index}>
             <div
               className={`flex items-center gap-5 p-3 rounded-lg mt-3 
-                hover:bg-slate-200 cursor-pointer
+                hover:bg-gray-400 cursor-pointer
                 ${path === menu.path ? "bg-slate-200" : ""} 
                 ${collapsed ? "justify-center" : ""}`}
             >
