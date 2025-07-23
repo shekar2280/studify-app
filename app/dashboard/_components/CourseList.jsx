@@ -6,6 +6,7 @@ import CourseCardItem from "./CourseCardItem";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Search } from "lucide-react";
 import { poppins } from "@/app/fonts";
+import { GiBookshelf } from "react-icons/gi";
 
 function CourseList() {
   const { user } = useUser();
@@ -90,7 +91,7 @@ function CourseList() {
         );
 
   return (
-    <div className="mt-10">
+    <div className="mt-10 bg-gray-100 min-h-[60vh] p-4 rounded-lg">
       <h2 className="font-bold text-2xl flex justify-between items-center">
         Your Study Material
         <div className="flex justify-between items-center gap-3">
@@ -118,25 +119,35 @@ function CourseList() {
       </h2>
 
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 mt-5 gap-5">
-        {!loading
-          ? filteredCourses.map((course, index) => {
-              console.log("Course being passed to CourseCardItem:", course); 
-
-              return (
-                <CourseCardItem
-                  course={course}
-                  key={index}
-                  onDelete={handleDelete}
-                  chapters={course?.courseLayout?.chapters || []}
-                />
-              );
-            })
-          : [1, 2, 3, 4, 5, 6].map((item, index) => (
-              <div
-                key={index}
-                className="h-56 w-full bg-slate-200 rounded-lg animate-pulse"
-              ></div>
-            ))}
+        {loading ? (
+          [1, 2, 3, 4, 5, 6].map((item, index) => (
+            <div
+              key={index}
+              className="h-56 w-full bg-slate-200 rounded-lg animate-pulse"
+            ></div>
+          ))
+        ) : filteredCourses.length === 0 ? (
+          <div className="mt-20 col-span-full text-center text-xl text-gray-600 font-medium">
+            <div className="flex flex-col items-center gap-5">
+              <GiBookshelf className="text-6xl text-cyan-600" />
+              <h2>No courses yet 🎓</h2>
+              <h2 className="text-lg text-gray-500">
+                Click on{" "}
+                <span className="font-semibold">+ Create New Course</span> to
+                start learning
+              </h2>
+            </div>
+          </div>
+        ) : (
+          filteredCourses.map((course, index) => (
+            <CourseCardItem
+              course={course}
+              key={index}
+              onDelete={handleDelete}
+              chapters={course?.courseLayout?.chapters || []}
+            />
+          ))
+        )}
       </div>
     </div>
   );
