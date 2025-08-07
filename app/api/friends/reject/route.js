@@ -1,5 +1,5 @@
-import { db } from "@/lib/db";
-import { FRIEND_REQUEST_TABLE } from "@/db/schema";
+import { db } from "@/configs/db";
+import { FRIEND_REQUEST_TABLE } from "@/configs/schema";
 import { and, eq } from "drizzle-orm";
 
 export async function POST(req) {
