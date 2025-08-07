@@ -2,6 +2,7 @@ import { db } from "@/configs/db";
 import { inngest } from "./client";
 import {
   CHAPTER_NOTES_TABLE,
+  MESSAGES_TABLE,
   STUDY_MATERIAL_TABLE,
   STUDY_TYPE_CONTENT_TABLE,
   USER_TABLE,
@@ -14,13 +15,17 @@ import {
   generateStudyTypeContentAiModel,
   courseOutlineAIModel,
 } from "@/configs/AImodel";
+import crypto from "crypto";
 
 export const helloWorld = inngest.createFunction(
   { id: "hello-world" },
-  { event: "test/hello.world" },
+  { event: "hello-world" },
   async ({ event, step }) => {
     await step.sleep("wait-a-moment", "1s");
-    return { message: `Hello ${event.data.email}!` };
+    return {
+      message: `Hello ${event.data.email}!`,
+      debug: "Function executed!",
+    };
   }
 );
 
@@ -42,6 +47,7 @@ export const CreateNewUser = inngest.createFunction(
           return await db
             .insert(USER_TABLE)
             .values({
+              id: user?.id,
               name: user?.fullName,
               email: user?.primaryEmailAddress?.emailAddress,
             })
@@ -62,18 +68,12 @@ export const GenerateNotes = inngest.createFunction(
   async ({ event, step }) => {
     const { course } = event.data;
 
-    console.log("📌 Received Course Data:", JSON.stringify(course, null, 2));
-
     if (!course || !course.courseId || !course.courseLayout?.chapters) {
       console.error("Missing course data!");
       throw new Error("Invalid course data received.");
     }
 
     const generateChapterNotes = async (chapter, index) => {
-      console.log(
-        `📝 Generating Notes for Chapter ${index + 1}: ${chapter.chapter_name}`
-      );
-
       const [insertedNote] = await db
         .insert(CHAPTER_NOTES_TABLE)
         .values({
@@ -120,7 +120,6 @@ The JSON format must be:
       const aiResp = await result.response.text();
 
       if (!aiResp || aiResp.trim().length === 0) {
-        console.error(`Empty AI response for Chapter ${index + 1}`);
         throw new Error("AI returned empty notes.");
       }
       await db
@@ -240,6 +239,41 @@ export const generateCourseOutline = inngest.createFunction(
         .update(STUDY_MATERIAL_TABLE)
         .set({ status: "failed" })
         .where(eq(STUDY_MATERIAL_TABLE.id, recordId));
+    }
+  }
+);
+
+export const StoreNewMessage = inngest.createFunction(
+  { id: "store-message-in-db" },
+  { event: "message.send" },
+  async ({ event, step }) => {
+    try {
+      console.log("🚀 StoreNewMessage triggered", event.data);
+
+      const { senderId, receiverId, message, createdAt } = event.data;
+
+      console.log("📝 Inserting into DB:", {
+        senderId,
+        receiverId,
+        message,
+        createdAt,
+      });
+
+      const hashHex = crypto.createHash("sha256").update(message).digest("hex");
+
+      await db.insert(MESSAGES_TABLE).values({
+        senderId,
+        receiverId,
+        message: message,
+        createdAt: new Date(createdAt),
+      });
+
+      console.log("✅ Message stored successfully");
+      return { success: true };
+    } catch (error) {
+      console.error("❌ Error in StoreNewMessage:", error);
+      console.error("🔍 Details:", error?.response?.data || error.message);
+      throw error;
     }
   }
 );

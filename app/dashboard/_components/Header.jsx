@@ -11,7 +11,7 @@ function Header() {
         <Image src={"/icons8-logo.svg"} alt="logo" width={40} height={40} />
       </Link>
       <div className="flex items-center gap-4">
-        <UserButton afterSignOutUrl="http://localhost:3000" />
+        <UserButton afterSignOutUrl="/" />
       </div>
     </div>
   );

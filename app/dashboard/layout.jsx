@@ -10,6 +10,8 @@ function DashboardLayout({ children }) {
   const collapsedRoutes = ["/dashboard/chat"];
   const isCollapsed = collapsedRoutes.includes(path);
 
+  const shouldRemovePadding = path === "/dashboard/chat";
+
   return (
     <div className="flex bg-gray-100">
       <div className={`fixed hidden md:block ${isCollapsed ? "w-20" : "w-64"}`}>
@@ -17,8 +19,8 @@ function DashboardLayout({ children }) {
       </div>
 
       <div className={`${isCollapsed ? "md:ml-20" : "md:ml-64"} w-full`}>
-        <DashboardHeader />
-        <div className="p-10">{children}</div>
+        {!isCollapsed && <DashboardHeader />}
+        <div className={shouldRemovePadding ? "p-0" : "p-10"}>{children}</div>
       </div>
     </div>
   );

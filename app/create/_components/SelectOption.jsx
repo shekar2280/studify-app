@@ -1,7 +1,9 @@
+"use client";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import React, { useState } from "react";
 
-function SelectOption({selectedStudyType}) {
+function SelectOption({ selectedStudyType }) {
   const Options = [
     {
       name: "Exam",
@@ -37,7 +39,10 @@ function SelectOption({selectedStudyType}) {
             className={`p-4 flex flex-col items-center justify-center border rounded-xl hover:border-primary cursor-pointer ${
               option?.name == selectedOption && "border-primary"
             }`}
-            onClick={() => {setSelectedOption(option.name);selectedStudyType(option.name)}}
+            onClick={() => {
+              setSelectedOption(option.name);
+              selectedStudyType(option.name);
+            }}
           >
             <Image src={option.icon} alt={option.name} width={50} height={50} />
             <h2 className="text-sm mt-2">{option.name}</h2>

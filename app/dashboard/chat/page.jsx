@@ -1,19 +1,25 @@
-// app/coming-soon/page.tsx or src/pages/coming-soon.jsx
-import React from "react";
+"use client"
+
+import React, { useEffect, useState } from "react";
+import ChatList from "./_components/ChatList";
+import Message from "./_components/Message";
 
 export default function Chat() {
+  const [selectedFriend, setSelectedFriend] = useState(null);
+
+   useEffect(() => {
+    if (selectedFriend) {
+      console.log("Selected Friend:", selectedFriend);
+    }
+  }, [selectedFriend]);
+  
   return (
-    <div className="flex items-center justify-center h-screen bg-gradient-to-br from-gray-900 via-cyan-600 to-black text-white">
-      <div className="text-center space-y-6 animate-fade-in">
-        <h1 className="text-4xl md:text-6xl font-bold tracking-wide">🚧 Coming Soon</h1>
-        <p className="text-lg md:text-2xl text-gray-300">
-          We're building something amazing for you. Stay tuned!
-        </p>
-        <div className="flex justify-center mt-6">
-          <div className="w-4 h-4 bg-cyan-500 rounded-full animate-ping"></div>
-          <div className="w-4 h-4 bg-cyan-400 rounded-full mx-2 animate-pulse"></div>
-          <div className="w-4 h-4 bg-cyan-300 rounded-full animate-bounce"></div>
-        </div>
+    <div className="flex min-h-screen w-full bg-gray-100">
+      <div className="w-[30%] max-w-[400px] border-r border-gray-300">
+        <ChatList onSelectFriend={setSelectedFriend} />
+      </div>
+      <div className="flex-1 overflow-hidden">
+        <Message selectedFriend={selectedFriend} />
       </div>
     </div>
   );

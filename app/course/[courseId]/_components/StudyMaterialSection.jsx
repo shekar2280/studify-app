@@ -41,7 +41,6 @@ function StudyMaterialSection({ courseId, course }) {
       courseId: courseId,
       studyType: "ALL",
     });
-    console.log("Result data: ",result?.data);
     setStudyTypeContent(result.data);
   };
 

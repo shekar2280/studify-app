@@ -1,10 +1,9 @@
-// app/api/progress/route.js
 import { NextResponse } from "next/server";
 import { db } from "@/configs/db";
 import { USER_COURSE_PROGRESS_TABLE } from "@/configs/schema";
 import { eq, and } from "drizzle-orm";
 
-// POST: Update or Insert progress
+
 export async function POST(req) {
   try {
     const { userId, courseId, type, value } = await req.json();
@@ -60,7 +59,7 @@ export async function POST(req) {
   }
 }
 
-// GET: Fetch progress for a course
+
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -81,7 +80,6 @@ export async function GET(req) {
         )
       );
 
-    // ✅ Always return an object (empty or found)
     return NextResponse.json(progress[0] || {});
   } catch (err) {
     console.error("Progress fetch failed:", err);

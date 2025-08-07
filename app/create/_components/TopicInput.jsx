@@ -1,5 +1,7 @@
 import { Textarea } from "@/components/ui/textarea";
-import React from "react";
+import React, { useState } from "react";
+import Tesseract from "tesseract.js";
+
 import {
   Select,
   SelectContent,
@@ -7,20 +9,74 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { GoUpload } from "react-icons/go";
 
-function TopicInput({setTopic, setDifficultyLevel}) {
+function TopicInput({ setTopic, setDifficultyLevel }) {
+  const router = useRouter();
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [ocrResult, setOcrResult] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setSelectedImage(URL.createObjectURL(file));
+    setLoading(true);
+
+    Tesseract.recognize(file, "eng", {
+      logger: (m) => console.log(m),
+    })
+      .then(({ data: { text } }) => {
+        setOcrResult(text);
+        setTopic(text);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("OCR Error:", err);
+        setLoading(false);
+      });
+  };
+
   return (
-    <div className="mt-10 w-full flex-col">
+    <div className="mt-2 w-full flex-col">
       <h2>
         Enter topic or paste the content for which you want to generate the
         content
       </h2>
-      <Textarea placeholder="Start writing here" className="mt-2 w-full" onChange={(event)=>setTopic(event.target.value)} />
+      <Textarea
+        placeholder="Start writing here"
+        className="mt-2 w-full"
+        onChange={(event) => setTopic(event.target.value)}
+      />
+
+      <div className="flex flex-col items-center justify-center mt-5 gap-4">
+        <h2> OR </h2>
+        <div className="p-6 flex flex-col items-center justify-center border rounded-xl shadow-md"> 
+            <GoUpload className="mb-3" size={20}/>           
+            <h2 className="mb-4 text-xl font-semibold">Upload an Image</h2>
+          <input
+            type="file"
+            accept="image/*"
+            className="flex justify-center mx-auto"
+            onChange={handleImageUpload}
+          />
+          {loading && <p className="mt-4 text-cyan-500">Reading image...</p>}
+          {ocrResult && (
+            <div className="mt-4 text-center">
+              <h3 className="font-semibold mb-2">📝 Topic Contents:</h3>
+              <p className="whitespace-pre-line max-w-md">{ocrResult}</p>
+            </div>
+          )}
+        </div>
+      </div>
 
       <h2 className="mt-5 mb-3">Select the difficulty level</h2>
-      <Select onValueChange={(value)=>setDifficultyLevel(value)}>
+      <Select onValueChange={(value) => setDifficultyLevel(value)}>
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Difficulty Level"/>
+          <SelectValue placeholder="Difficulty Level" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="easy">Easy</SelectItem>

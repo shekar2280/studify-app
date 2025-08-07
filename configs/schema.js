@@ -1,7 +1,7 @@
 import { boolean, integer, json, pgTable, serial, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 export const USER_TABLE=pgTable('users', {
-    id:serial().primaryKey(),
+    id: varchar().primaryKey(),
     name:varchar().notNull(),
     email:varchar().notNull(),
     isMember:boolean().default(false),
@@ -52,18 +52,26 @@ export const USER_COURSE_PROGRESS_TABLE = pgTable("userCourseProgress", {
 });
 
 
-// export const FRIEND_REQUEST_TABLE = pgTable("friendRequests", {
-//   id: serial().primaryKey(),
-//   senderId: varchar().notNull(),
-//   receiverId: varchar().notNull(),
-//   status: varchar().default("pending"), 
-//   createdAt: timestamp().defaultNow(),
-// });
+export const MESSAGES_TABLE = pgTable("messages", {
+  id: serial().primaryKey(),
+  senderId: text("sender_id").notNull(),
+  receiverId: text("receiver_id").notNull(),
+  message: text("message").notNull(), // Encrypted
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const FRIEND_REQUEST_TABLE = pgTable("friendRequests", {
+  id: serial().primaryKey(),
+  senderId: varchar().notNull(),
+  receiverId: varchar().notNull(),
+  status: varchar().default("pending"), 
+  createdAt: timestamp().defaultNow(),
+});
 
 
-// export const FRIENDSHIP_TABLE = pgTable("friendships", {
-//   id: serial().primaryKey(),
-//   user1Id: varchar().notNull(),
-//   user2Id: varchar().notNull(),
-//   createdAt: timestamp().defaultNow(),
-// });
+export const FRIENDSHIP_TABLE = pgTable("friendships", {
+  id: serial().primaryKey(),
+  user1Id: varchar().notNull(),
+  user2Id: varchar().notNull(),
+  createdAt: timestamp().defaultNow(),
+});

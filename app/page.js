@@ -1,10 +1,40 @@
-"use client"
+"use client";
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+
+const features = [
+  {
+    id: 1,
+    title: "Organize Notes",
+    img: "/landing-notes.jpg",
+    desc: "Keep all your study notes organized in one place.",
+  },
+  {
+    id: 2,
+    title: "Track Progress",
+    img: "/landing-flashcards.png",
+    desc: "Visualize your learning journey and milestones.",
+  },
+  {
+    id: 3,
+    title: "Peer Collaboration",
+    img: "/landing-quiz.jpg",
+    desc: "Work with classmates in real-time.",
+  },
+  {
+    id: 4,
+    title: "Personal Dashboard",
+    img: "/landing-qa.jpeg",
+    desc: "Access all your study tools from a central hub.",
+  },
+];
 
 export default function Home() {
   const router = useRouter();
+
   const handleClick = () => {
-     router.push('/dashboard');
+    router.push("/dashboard");
   };
 
   return (

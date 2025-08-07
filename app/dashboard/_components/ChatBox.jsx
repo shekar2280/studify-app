@@ -7,7 +7,7 @@ import { IoLogOutOutline } from "react-icons/io5";
 export default function ChatBox() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [isOpen, setIsOpen] = useState(true); 
+  const [isOpen, setIsOpen] = useState(true);
 
   const { user } = useUser();
   const currentUserName = user?.username || user?.firstName || "Anonymous";
@@ -20,18 +20,32 @@ export default function ChatBox() {
     return () => socket.off("chat-message");
   }, []);
 
-  const sendMessage = () => {
-    if (input.trim()) {
-      const message = {
-        text: input,
-        sender: currentUserName,
-      };
+  const sendMessage = async () => {
+  if (input.trim()) {
+    const message = {
+      text: input,
+      sender: currentUserName,
+      senderId: user?.id,
+      receiverId: "public",
+      createdAt: new Date().toISOString(),
+    };
 
-      socket.emit("chat-message", message); 
-      setMessages((prev) => [...prev, { ...message, self: true }]);
-      setInput("");
+    socket.emit("chat-message", message);
+    setMessages((prev) => [...prev, { ...message, self: true }]);
+    setInput("");
+
+    try {
+      await fetch("/api/message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(message),
+      });
+    } catch (err) {
+      console.error("Error sending to Inngest API", err);
     }
-  };
+  }
+};
+
 
   if (!isOpen) return null;
 
@@ -42,7 +56,7 @@ export default function ChatBox() {
         <IoLogOutOutline
           size={25}
           className="cursor-pointer"
-          onClick={() => setIsOpen(false)} 
+          onClick={() => setIsOpen(false)}
         />
       </div>
 
