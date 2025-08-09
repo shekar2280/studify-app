@@ -7,6 +7,7 @@ const { createAdapter } = require("@socket.io/redis-adapter");
 
 const app = express();
 const server = http.createServer(app);
+const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 
@@ -79,6 +80,7 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(3001, () => {
-  console.log("🚀 Socket.IO server running on port 3001");
+
+server.listen(PORT, () => {
+  console.log(`🚀 Socket.IO server running on port ${PORT}`);
 });
