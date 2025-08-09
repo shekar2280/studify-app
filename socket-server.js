@@ -2,6 +2,8 @@ const { Server } = require("socket.io");
 const http = require("http");
 const express = require("express");
 const cors = require("cors");
+const { createClient } = require("redis");
+const { createAdapter } = require("@socket.io/redis-adapter");
 
 const app = express();
 const server = http.createServer(app);
@@ -14,6 +16,19 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
 });
+
+
+const redisUrl = process.env.REDIS_URL; 
+const pubClient = createClient({ url: redisUrl });
+const subClient = pubClient.duplicate();
+
+(async () => {
+  await pubClient.connect();
+  await subClient.connect();
+  io.adapter(createAdapter(pubClient, subClient));
+  console.log("✅ Redis adapter connected");
+})();
+
 
 const onlineUsers = new Map();
 
@@ -41,13 +56,11 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     for (const [userId, socketSet] of onlineUsers.entries()) {
       socketSet.delete(socket.id);
-
       if (socketSet.size === 0) {
         onlineUsers.delete(userId);
         console.log("User fully disconnected:", userId);
       }
     }
-
     emitOnlineUsers();
   });
 
@@ -59,7 +72,6 @@ io.on("connection", (socket) => {
         console.log("User went offline:", userId);
       }
     }
-
     emitOnlineUsers();
   });
 
