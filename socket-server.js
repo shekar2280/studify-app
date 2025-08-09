@@ -12,13 +12,13 @@ app.use(cors());
 
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: process.env.PROJECT_URL || "http://localhost:3000",
     methods: ["GET", "POST"],
   },
 });
 
 
-const redisUrl = process.env.REDIS_URL; 
+const redisUrl = process.env.REDIS_URL;
 const pubClient = createClient({ url: redisUrl });
 const subClient = pubClient.duplicate();
 
@@ -26,19 +26,16 @@ const subClient = pubClient.duplicate();
   await pubClient.connect();
   await subClient.connect();
   io.adapter(createAdapter(pubClient, subClient));
-  console.log("✅ Redis adapter connected");
 })();
-
 
 const onlineUsers = new Map();
 
 function emitOnlineUsers() {
-  const userIds = Array.from(onlineUsers.keys());
-  io.emit("get-users", userIds);
+  io.emit("get-users", Array.from(onlineUsers.keys()));
 }
 
 io.on("connection", (socket) => {
-  console.log("A user connected:", socket.id);
+
 
   socket.on("new-user-add", (userId) => {
     if (!userId) return;
@@ -46,47 +43,42 @@ io.on("connection", (socket) => {
     if (!onlineUsers.has(userId)) {
       onlineUsers.set(userId, new Set());
     }
-
     onlineUsers.get(userId).add(socket.id);
-    console.log("User added:", userId, socket.id);
 
-    emitOnlineUsers();
-  });
+    socket.join(userId);
+    
 
-  socket.on("disconnect", () => {
-    for (const [userId, socketSet] of onlineUsers.entries()) {
-      socketSet.delete(socket.id);
-      if (socketSet.size === 0) {
-        onlineUsers.delete(userId);
-        console.log("User fully disconnected:", userId);
-      }
-    }
-    emitOnlineUsers();
-  });
-
-  socket.on("offline", () => {
-    for (const [userId, socketSet] of onlineUsers.entries()) {
-      socketSet.delete(socket.id);
-      if (socketSet.size === 0) {
-        onlineUsers.delete(userId);
-        console.log("User went offline:", userId);
-      }
-    }
     emitOnlineUsers();
   });
 
   socket.on("chat-message", (msg) => {
-    console.log("Message received:", msg);
+    io.to(msg.receiverId).emit("chat-message", msg);
+  });
 
-    const receiverSockets = onlineUsers.get(msg.receiverId);
-    if (receiverSockets) {
-      receiverSockets.forEach((sId) => {
-        io.to(sId).emit("chat-message", msg);
-      });
+  socket.on("offline", (userId) => {
+    if (onlineUsers.has(userId)) {
+      onlineUsers.get(userId).delete(socket.id);
+      if (onlineUsers.get(userId).size === 0) {
+        onlineUsers.delete(userId);
+      }
+      socket.leave(userId);
+      console.log(`⚠️ User ${userId} went offline`);
+      emitOnlineUsers();
     }
+  });
+
+  socket.on("disconnect", () => {
+    console.log("❌ Disconnected:", socket.id);
+    for (let [userId, sockets] of onlineUsers.entries()) {
+      sockets.delete(socket.id);
+      if (sockets.size === 0) {
+        onlineUsers.delete(userId);
+      }
+    }
+    emitOnlineUsers();
   });
 });
 
 server.listen(3001, () => {
-  console.log("Socket.IO server running on port 3001");
+  console.log("🚀 Socket.IO server running on port 3001");
 });
