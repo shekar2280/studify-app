@@ -3,11 +3,9 @@ import { MESSAGES_TABLE } from "@/configs/schema";
 import { eq, or, and, asc } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
-export async function GET(req, context) {
-  const { params } = await context;
+export async function GET(req, { params }) {
+  const { friendId } = await params; 
   const currentUserId = req.headers.get("x-user-id");
-
-  const friendId = params.friendId;
 
   const messages = await db
     .select()
@@ -30,3 +28,4 @@ export async function GET(req, context) {
 
   return NextResponse.json(messages);
 }
+

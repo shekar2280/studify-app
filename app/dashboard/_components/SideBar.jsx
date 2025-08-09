@@ -15,7 +15,7 @@ import { Merriweather } from "next/font/google";
 
 const merriweather = Merriweather({
   subsets: ["latin"],
-  weight: ["400", "700"], 
+  weight: ["400", "700"],
 });
 
 function SideBar({ collapsed }) {
@@ -30,7 +30,9 @@ function SideBar({ collapsed }) {
   return (
     <div className="h-screen shadow-md p-5 flex flex-col items-center bg-gray-100">
       <div className="flex gap-2 items-center justify-start w-full">
-        <Image src={"/icons8-logo.svg"} alt="logo" width={40} height={40} />
+        <Link href={"/dashboard"}>
+          <Image src={"/icons8-logo.svg"} alt="logo" width={40} height={40} />
+        </Link>
         {!collapsed && (
           <h2
             className={`text-2xl text-cyan-700 italic font-bold ${merriweather.className}`}
@@ -41,7 +43,7 @@ function SideBar({ collapsed }) {
       </div>
 
       {!collapsed && (
-        <Link href={"/create"} className="w-full mt-10">
+        <Link href={"/create"} className="w-full mt-16">
           <Button className="w-full">
             <span className="mr-1 text-2xl">+</span>Create New Course
           </Button>
@@ -56,7 +58,7 @@ function SideBar({ collapsed }) {
         {MenuList.map((menu, index) => (
           <Link href={menu.path} key={index}>
             <div
-              className={`flex items-center gap-5 p-3 rounded-lg mt-3 
+              className={`flex items-center gap-5 p-3 rounded-lg mt-5 
                 hover:bg-gray-400 cursor-pointer
                 ${path === menu.path ? "bg-slate-200" : ""} 
                 ${collapsed ? "justify-center" : ""}`}

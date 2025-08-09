@@ -54,13 +54,13 @@ function TopicInput({ setTopic, setDifficultyLevel }) {
 
       <div className="flex flex-col items-center justify-center mt-5 gap-4">
         <h2> OR </h2>
-        <div className="p-6 flex flex-col items-center justify-center border rounded-xl shadow-md"> 
+        <div className="p-4 flex flex-col items-center justify-center border rounded-xl shadow-md"> 
             <GoUpload className="mb-3" size={20}/>           
-            <h2 className="mb-4 text-xl font-semibold">Upload an Image</h2>
+            <h2 className="mb-4 text-l font-semibold">Upload an Image</h2>
           <input
             type="file"
             accept="image/*"
-            className="flex justify-center mx-auto"
+            className="flex justify-center mx-auto pl-20"
             onChange={handleImageUpload}
           />
           {loading && <p className="mt-4 text-cyan-500">Reading image...</p>}

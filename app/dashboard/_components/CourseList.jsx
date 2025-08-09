@@ -91,7 +91,7 @@ function CourseList() {
         );
 
   return (
-    <div className="mt-10 bg-gray-100 min-h-[60vh] p-4 rounded-lg">
+    <div className="mt-10 bg-gray-100 min-h-[60vh] rounded-lg">
       <h2 className="font-bold text-2xl flex justify-between items-center">
         Your Study Material
         <div className="flex justify-between items-center gap-3">

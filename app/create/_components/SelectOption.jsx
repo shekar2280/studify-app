@@ -32,7 +32,7 @@ function SelectOption({ selectedStudyType }) {
       <h2 className="text-center mb-2 text-lg">
         Choose the topic you want to create the material for ?
       </h2>
-      <div className="grid grid-cols-2 mt-5 md:grid-cols-3 lg:grid-cols-5 gap-5">
+      <div className="grid grid-cols-2 mt-5 md:grid-cols-3 lg:grid-cols-5 gap-5 h-[160px] ">
         {Options.map((option, index) => (
           <div
             key={index}

@@ -14,7 +14,9 @@ export default function Chat() {
   }, [selectedFriend]);
   
   return (
-    <div className="flex min-h-screen w-full bg-gray-100">
+    <div className="flex min-h-screen w-full bg-cover bg-center bg-gray-100"
+    style={{ backgroundImage: `url('/background.jpg')`}}
+    >
       <div className="w-[30%] max-w-[400px] border-r border-gray-300">
         <ChatList onSelectFriend={setSelectedFriend} />
       </div>

@@ -42,7 +42,7 @@ function Create() {
   };
 
   return (
-    <div className="flex flex-col items-center p-5 md:px-24 lg:px-36 mt-20">
+    <div className="flex flex-col items-center p-5 md:px-24 lg:px-36 mt-8">
       <h2 className="font-bold text-4xl text-primary">
         Start Building Your Personal Study Material
       </h2>
@@ -66,7 +66,7 @@ function Create() {
         )}
       </div>
 
-      <div className="flex justify-between w-full mt-32">
+      <div className="flex justify-between w-full mt-20">
         {step != 0 ? (
           <Button variant="outline" onClick={() => setStep(step - 1)}>
             Previous

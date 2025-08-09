@@ -15,12 +15,11 @@ const io = new Server(server, {
   },
 });
 
-// Map<userId, Set<socketId>>
 const onlineUsers = new Map();
 
 function emitOnlineUsers() {
   const userIds = Array.from(onlineUsers.keys());
-  io.emit("get-users", userIds); // Send just userIds
+  io.emit("get-users", userIds);
 }
 
 io.on("connection", (socket) => {
