@@ -1,6 +1,6 @@
 import { db } from "@/configs/db";
 import { FRIEND_REQUEST_TABLE, USER_TABLE } from "@/configs/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 
 export async function POST(req) {
   try {
@@ -12,6 +12,7 @@ export async function POST(req) {
         senderId: FRIEND_REQUEST_TABLE.senderId,
         senderName: USER_TABLE.name,
         senderEmail: USER_TABLE.email,
+        receiverId: FRIEND_REQUEST_TABLE.receiverId,
         status: FRIEND_REQUEST_TABLE.status,
         createdAt: FRIEND_REQUEST_TABLE.createdAt,
       })
@@ -19,8 +20,11 @@ export async function POST(req) {
       .leftJoin(USER_TABLE, eq(USER_TABLE.id, FRIEND_REQUEST_TABLE.senderId))
       .where(
         and(
-          eq(FRIEND_REQUEST_TABLE.receiverId, userId),
-          eq(FRIEND_REQUEST_TABLE.status, "pending")
+          eq(FRIEND_REQUEST_TABLE.status, "pending"),
+          or(
+            eq(FRIEND_REQUEST_TABLE.receiverId, userId),
+            eq(FRIEND_REQUEST_TABLE.senderId, userId)
+          )
         )
       );
 

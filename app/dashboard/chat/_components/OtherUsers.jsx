@@ -7,6 +7,7 @@ import { poppins } from "@/app/fonts";
 function OtherUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sentRequests, setSentRequests] = useState([]); 
   const { user } = useUser();
 
   useEffect(() => {
@@ -30,9 +31,6 @@ function OtherUsers() {
         ]);
 
         if (!userRes.ok || !reqRes.ok || !friendsRes.ok) {
-          console.error("userRes:", userRes.status);
-          console.error("reqRes:", reqRes.status);
-          console.error("friendsRes:", friendsRes.status);
           throw new Error("One or more API requests failed");
         }
 
@@ -40,24 +38,20 @@ function OtherUsers() {
         const requests = await reqRes.json();
         const friends = await friendsRes.json();
 
-        const filtered = allUsers.filter((u) => {
-
-          if (u.email === user?.primaryEmailAddress?.emailAddress) return false;
-
-          const isFriend = friends.some(
-            (f) => f.user1Id === u.id || f.user2Id === u.id
-          );
-          if (isFriend) return false;
-
-          const hasPendingRequest = requests.some(
-            (r) =>
-              (r.senderId === u.id && r.receiverId === user.id) ||
-              (r.receiverId === u.id && r.senderId === user.id)
-          );
-          if (hasPendingRequest) return false;
-
-          return true;
-        });
+        const filtered = allUsers
+          .filter((u) => u.email !== user?.primaryEmailAddress?.emailAddress)
+          .filter(
+            (u) =>
+              !friends.some((f) => f.user1Id === u.id || f.user2Id === u.id)
+          )
+          .map((u) => ({
+            ...u,
+            pending: requests.some(
+              (r) =>
+                (r.senderId === user.id && r.receiverId === u.id) ||
+                (r.receiverId === user.id && r.senderId === u.id)
+            ),
+          }));
 
         setUsers(filtered);
         setLoading(false);
@@ -78,6 +72,8 @@ function OtherUsers() {
           receiverId: receiverId,
         }),
       });
+
+      setSentRequests((prev) => [...prev, receiverId]);
     } catch (err) {
       console.error("Error sending friend request", err);
     }
@@ -112,7 +108,15 @@ function OtherUsers() {
                 </h1>
               </div>
               <div className="flex flex-row gap-4">
-                <Button onClick={() => sendRequest(u.id)}>Send Request</Button>
+                {u.pending || sentRequests.includes(u.id) ? (
+                  <Button disabled className="bg-gray-400 text-black">
+                    Request Sent
+                  </Button>
+                ) : (
+                  <Button onClick={() => sendRequest(u.id)}>
+                    Send Request
+                  </Button>
+                )}
               </div>
             </div>
           ))

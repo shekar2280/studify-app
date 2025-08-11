@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 function FriendRequests() {
   const [requests, setRequests] = useState([]);
@@ -27,7 +28,11 @@ function FriendRequests() {
         }
 
         const data = await res.json();
-        setRequests(data);
+
+         const receivedRequests = data.filter(
+        (r) => r.receiverId === user.id
+      );
+        setRequests(receivedRequests);
       } catch (err) {
         console.error("Error fetching friend requests", err);
       } finally {
@@ -52,8 +57,21 @@ function FriendRequests() {
         }),
       });
 
+      toast({
+        title:
+          action === "accept"
+            ? "Friend request accepted"
+            : "Friend request rejected",
+        description:
+          action === "accept"
+            ? "You are now friends!"
+            : "Friend request has been declined.",
+      });
+
       setRequests((prev) =>
-        prev.filter((r) => !(r.senderId === senderId && r.receiverId === user.id))
+        prev.filter(
+          (r) => !(r.senderId === senderId && r.receiverId === user.id)
+        )
       );
     } catch (err) {
       console.error(`Failed to ${action} friend request`, err);
@@ -72,7 +90,7 @@ function FriendRequests() {
         requests.map((r) => (
           <div
             key={r.id}
-            className="bg-slate-700 p-4 rounded-lg flex justify-between items-center mb-2"
+            className="bg-slate-200 p-4 rounded-lg flex justify-between items-center mb-2"
           >
             <div>
               <p className="text-black font-medium">{r.senderName}</p>
@@ -80,13 +98,17 @@ function FriendRequests() {
             <div className="flex gap-2">
               <Button
                 className="bg-green-600 hover:bg-green-700 text-black"
-                onClick={() => respond({ senderId: r.senderId, action: "accept" })}
+                onClick={() =>
+                  respond({ senderId: r.senderId, action: "accept" })
+                }
               >
                 Accept
               </Button>
               <Button
                 className="bg-red-600 hover:bg-red-700 text-black"
-                onClick={() => respond({ senderId: r.senderId, action: "reject" })}
+                onClick={() =>
+                  respond({ senderId: r.senderId, action: "reject" })
+                }
               >
                 Reject
               </Button>
