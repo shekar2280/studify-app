@@ -68,7 +68,7 @@ function ChatList({ onSelectFriend }) {
       : friends.filter((user) =>
           user?.name?.toLowerCase().includes(searchQuery.toLowerCase())
         );
-  console.log("Filtered users: ", filteredUsers);
+
   return (
     <div className="h-screen shadow-md p-5 flex flex-col">
       <div>

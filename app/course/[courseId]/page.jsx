@@ -10,11 +10,9 @@ import { useUser } from "@clerk/nextjs";
 
 const fetchCourse = async (courseId, userId) => {
   const courseRes = await axios.get("/api/courses?courseId=" + courseId);
-  console.log("Course Res: ", courseRes);
   const progressRes = await axios.get(
     `/api/progress?courseId=${courseId}&userId=${userId}`
   );
-  console.log("Progress: ", progressRes);
 
   return {
     ...courseRes.data.result,
