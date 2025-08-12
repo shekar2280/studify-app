@@ -1,6 +1,6 @@
 import { db } from "@/configs/db";
-import { FRIENDSHIP_TABLE, USER_TABLE } from "@/configs/schema";
-import { eq, or, inArray } from "drizzle-orm";
+import { FRIENDSHIP_TABLE, USER_TABLE, MESSAGES_TABLE } from "@/configs/schema";
+import { eq, or, inArray, and, count } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
@@ -30,7 +30,24 @@ export async function POST(req) {
       .from(USER_TABLE)
       .where(inArray(USER_TABLE.id, friendIds));
 
-    return NextResponse.json(friends);
+    const friendsWithUnread = await Promise.all(
+      friends.map(async (friend) => {
+        const [{ unreadCount }] = await db
+          .select({ unreadCount: count() })
+          .from(MESSAGES_TABLE)
+          .where(
+            and(
+              eq(MESSAGES_TABLE.senderId, friend.id), 
+              eq(MESSAGES_TABLE.receiverId, userId),  
+              eq(MESSAGES_TABLE.isRead, false)        
+            )
+          );
+
+        return { ...friend, unreadCount };
+      })
+    );
+
+    return NextResponse.json(friendsWithUnread);
   } catch (err) {
     console.error("Error fetching friends:", err);
     return new Response("Failed to fetch", { status: 500 });

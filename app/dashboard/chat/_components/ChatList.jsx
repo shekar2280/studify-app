@@ -1,5 +1,5 @@
 "use client";
-import { useUser } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 import { poppins } from "@/app/fonts";
 import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -10,7 +10,7 @@ import { socket } from "@/lib/socket";
 
 function ChatList({ onSelectFriend }) {
   const [friends, setFriends] = useState([]);
-  const [activeTab, setActiveTab] = useState(null); 
+  const [activeTab, setActiveTab] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const { user } = useUser();
@@ -36,11 +36,29 @@ function ChatList({ onSelectFriend }) {
     if (!socket || !user?.id) return;
     socket.emit("new-user-add", user.id);
     socket.on("get-users", (users) => {
-      setOnlineUsers(users); 
+      setOnlineUsers(users);
+    });
+
+    socket.on("unread-count-update", ({ senderId, count }) => {
+      setFriends((prev) =>
+        prev.map((f) =>
+          f.id === senderId
+            ? { ...f, unreadCount: (f.unreadCount || 0) + count }
+            : f
+        )
+      );
+    });
+
+    socket.on("unread-count-reset", ({ friendId }) => {
+      setFriends((prev) =>
+        prev.map((f) => (f.id === friendId ? { ...f, unreadCount: 0 } : f))
+      );
     });
 
     return () => {
       socket.off("get-users");
+      socket.off("unread-count-update");
+      socket.off("unread-count-reset");
     };
   }, [user?.id]);
 
@@ -50,9 +68,9 @@ function ChatList({ onSelectFriend }) {
       : friends.filter((user) =>
           user?.name?.toLowerCase().includes(searchQuery.toLowerCase())
         );
-
+  console.log("Filtered users: ", filteredUsers);
   return (
-    <div className="h-screen shadow-md p-5">
+    <div className="h-screen shadow-md p-5 flex flex-col">
       <div>
         <div className="flex flex-row justify-between">
           <h1 className="font-semibold text-2xl text-black">Chats</h1>
@@ -103,7 +121,7 @@ function ChatList({ onSelectFriend }) {
         )}
       </div>
 
-      <div className="flex flex-col mt-5">
+      <div className="flex-1 overflow-y-auto mt-5">
         <h2 className="text-xl font-semibold text-black mb-3">Friends</h2>
         {filteredUsers.map((f) => {
           const isOnline = onlineUsers.includes(f.id);
@@ -112,7 +130,20 @@ function ChatList({ onSelectFriend }) {
             <div
               key={f.id}
               className="flex flex-row justify-between items-center px-5 py-4 hover:bg-slate-300 rounded-xl cursor-pointer"
-              onClick={() => onSelectFriend(f)}
+              onClick={() => {
+                onSelectFriend(f);
+
+                socket.emit("mark-messages-read", {
+                  userId: user.id,
+                  friendId: f.id,
+                });
+
+                setFriends((prev) =>
+                  prev.map((friend) =>
+                    friend.id === f.id ? { ...friend, unreadCount: 0 } : friend
+                  )
+                );
+              }}
             >
               <div className="flex flex-row items-center gap-3">
                 <div className="w-12 h-12 bg-sky-700 rounded-full flex items-center justify-center relative">
@@ -131,6 +162,15 @@ function ChatList({ onSelectFriend }) {
                     {f.name}
                   </h1>
                 </div>
+              </div>
+              <div className="justify-right">
+                <h2>
+                  {f.unreadCount > 0 && (
+                    <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1">
+                      {f.unreadCount}
+                    </span>
+                  )}
+                </h2>
               </div>
             </div>
           );

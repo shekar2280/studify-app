@@ -12,6 +12,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
 import { Merriweather } from "next/font/google";
+import { FaGoogle } from "react-icons/fa";
 
 const merriweather = Merriweather({
   subsets: ["latin"],
@@ -20,9 +21,16 @@ const merriweather = Merriweather({
 
 function SideBar({ collapsed }) {
   const MenuList = [
-    { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-    { name: "Chat", icon: MessageCircle, path: "/dashboard/chat" },
-    { name: "Profile", icon: UserCircle, path: "/dashboard/profile" },
+    { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard", title: "Dashboard" },
+    { name: "Chat", icon: MessageCircle, path: "/dashboard/chat", title: "Chat" },
+    {
+      name: "Google Search",
+      icon: FaGoogle,
+      path: "https://www.google.com",
+      external: true,
+      title: "Google Search"
+    },
+    { name: "Profile", icon: UserCircle, path: "/dashboard/profile", title:"Profile" },
   ];
 
   const path = usePathname();
@@ -55,19 +63,39 @@ function SideBar({ collapsed }) {
           collapsed ? "flex flex-col items-center" : ""
         }`}
       >
-        {MenuList.map((menu, index) => (
-          <Link href={menu.path} key={index}>
-            <div
-              className={`flex items-center gap-5 p-3 rounded-lg mt-5 
-                hover:bg-gray-400 cursor-pointer
-                ${path === menu.path ? "bg-slate-200" : ""} 
-                ${collapsed ? "justify-center" : ""}`}
+        {MenuList.map((menu, index) => {
+          const isActive = path === menu.path;
+          return menu.external ? (
+            <a
+              href={menu.path}
+              target="_blank"
+              rel="noopener noreferrer"
+              key={index}
+              title={menu.title}
             >
-              <menu.icon />
-              {!collapsed && <h1>{menu.name}</h1>}
-            </div>
-          </Link>
-        ))}
+              <div
+                className={`flex items-center gap-5 p-3 rounded-lg mt-5 
+          hover:bg-gray-400 cursor-pointer
+          ${collapsed ? "justify-center" : ""}`}
+              >
+                <menu.icon />
+                {!collapsed && <h1>{menu.name}</h1>}
+              </div>
+            </a>
+          ) : (
+            <Link href={menu.path} key={index} title={menu.title}>
+              <div
+                className={`flex items-center gap-5 p-3 rounded-lg mt-5 
+          hover:bg-gray-400 cursor-pointer
+          ${isActive ? "bg-slate-200" : ""} 
+          ${collapsed ? "justify-center" : ""}`}
+              >
+                <menu.icon />
+                {!collapsed && <h1>{menu.name}</h1>}
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

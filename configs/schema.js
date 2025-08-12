@@ -56,8 +56,10 @@ export const MESSAGES_TABLE = pgTable("messages", {
   id: serial().primaryKey(),
   senderId: text("sender_id").notNull(),
   receiverId: text("receiver_id").notNull(),
-  message: text("message").notNull(), // Encrypted
+  message: text("message").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+  isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"),
 });
 
 export const FRIEND_REQUEST_TABLE = pgTable("friendRequests", {

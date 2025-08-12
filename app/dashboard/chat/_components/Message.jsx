@@ -50,6 +50,16 @@ function Message({ selectedFriend }) {
     return () => socket.off("chat-message");
   }, [selectedFriend]);
 
+  useEffect(() => {
+  if (selectedFriend && currentUserId) {
+    fetch(`/api/messages/read/${selectedFriend.id}`, {
+      method: "PATCH",
+      headers: { "x-user-id": currentUserId }
+    });
+  }
+}, [selectedFriend, currentUserId]);
+
+
   const handleSendMessage = async () => {
     if (!input.trim() || !user) return;
 

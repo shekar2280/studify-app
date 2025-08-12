@@ -18,7 +18,6 @@ const io = new Server(server, {
   },
 });
 
-
 const redisUrl = process.env.REDIS_URL;
 const pubClient = createClient({ url: redisUrl });
 const subClient = pubClient.duplicate();
@@ -36,8 +35,6 @@ function emitOnlineUsers() {
 }
 
 io.on("connection", (socket) => {
-
-
   socket.on("new-user-add", (userId) => {
     if (!userId) return;
 
@@ -47,14 +44,23 @@ io.on("connection", (socket) => {
     onlineUsers.get(userId).add(socket.id);
 
     socket.join(userId);
-    
 
     emitOnlineUsers();
   });
 
   socket.on("chat-message", (msg) => {
     io.to(msg.receiverId).emit("chat-message", msg);
+    io.to(msg.receiverId).emit("unread-count-update", {
+      senderId: msg.senderId,
+      count: 1, 
+    });
   });
+
+  socket.on("mark-messages-read", ({ userId, friendId }) => {
+
+  io.to(userId).emit("unread-count-reset", { friendId });
+});
+
 
   socket.on("offline", (userId) => {
     if (onlineUsers.has(userId)) {
@@ -80,7 +86,6 @@ io.on("connection", (socket) => {
   });
 });
 
-
 server.listen(PORT, () => {
-  console.log(`🚀 Socket.IO server running on port ${PORT}`);
+  console.log(`🚀 Socket.IO server running on port ${PORT}`);
 });

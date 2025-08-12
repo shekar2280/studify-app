@@ -53,7 +53,7 @@ function Flashcards() {
 
   return (
     <div>
-      <div className="mt-20">
+      <div className="mt-15">
         {flashCards.length > 0 ? (
           <Carousel setApi={setApi}>
             <CarouselContent>

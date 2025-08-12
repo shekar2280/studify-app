@@ -22,6 +22,7 @@ export async function GET(req, { params }) {
             eq(MESSAGES_TABLE.receiverId, currentUserId)
           )
         )
+        
       )
     )
     .orderBy(asc(MESSAGES_TABLE.createdAt));
