@@ -30,7 +30,7 @@ function SideBar({ collapsed }) {
       external: true,
       title: "Google Search"
     },
-    { name: "Profile", icon: UserCircle, path: "/dashboard/profile", title:"Profile" },
+    // { name: "Profile", icon: UserCircle, path: "/dashboard/profile", title:"Profile" },
   ];
 
   const path = usePathname();

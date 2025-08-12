@@ -38,8 +38,6 @@ export default function DashboardHeader() {
 
   return (
     <div className="p-5 flex justify-end gap-5 bg-gray-100 items-center">
-      <IoNotifications size={30} />
-
       <Link href={`/dashboard/chat`} className="relative">
         <FiMessageSquare size={30} />
 
