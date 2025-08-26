@@ -5,6 +5,7 @@ import axios from "axios";
 import QACardItem from "./_components/QACardItem";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@clerk/nextjs";
+import { FaArrowRightLong, FaArrowLeftLong } from "react-icons/fa6";
 
 function QA() {
   const { courseId } = useParams();
@@ -52,8 +53,23 @@ function QA() {
     }
   };
 
+  const handleComplete = async () => {
+    try {
+      await axios.post("/api/progress", {
+        userId: user?.id,
+        courseId,
+        type: "qa",
+        value: true,
+      });
+    } catch (error) {
+      console.error("Failed to update progress:", error);
+    } finally {
+      route.back();
+    }
+  };
+
   return (
-    <div>
+    <div className="mt-10 mb-20">
       {qaData.length > 0 ? (
         <>
           <h2 className="text-xl font-bold text-center mb-6">
@@ -66,37 +82,62 @@ function QA() {
             ))}
           </div>
 
-          <div className="flex justify-between mt-10 mb-5">
-            <Button
-              onClick={goToPreviousTopic}
-              disabled={currentTopic === 0}
-              className="disabled:opacity-50"
-            >
-              Previous
-            </Button>
-
-            {currentTopic + 1 < qaData.length ? (
-              <Button onClick={goToNextTopic}>Next </Button>
-            ) : (
+          <div>
+            {currentTopic > 0 && (
               <Button
-                onClick={async () => {
-                  try {
-                    await axios.post("/api/progress", {
-                      userId: user?.id,
-                      courseId,
-                      type: "qa",
-                      value: true,
-                    });
-                  } catch (error) {
-                    console.error("Failed to update progress:", error);
-                  } finally {
-                    route.back();
-                  }
-                }}
+                variant="outline"
+                className="hidden md:flex fixed top-1/2 left-4 -translate-y-1/2 ml-6"
+                onClick={goToPreviousTopic}
               >
-                Go to Course Page
+                <FaArrowLeftLong />
               </Button>
             )}
+            {currentTopic + 1 < qaData.length ? (
+              <Button
+                variant="outline"
+                className="hidden md:flex fixed top-1/2 right-4 -translate-y-1/2 mr-6"
+                onClick={goToNextTopic}
+              >
+                <FaArrowRightLong />
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="hidden md:flex fixed top-1/2 right-4 -translate-y-1/2 mr-6"
+                onClick={handleComplete}
+              >
+                Go to Course
+              </Button>
+            )}
+
+            <div className="flex md:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-3 justify-between">
+              {currentTopic > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={goToPreviousTopic}
+                  className="flex-1 mr-2"
+                >
+                  <FaArrowLeftLong className="mr-1" /> Prev
+                </Button>
+              )}
+              {currentTopic + 1 < qaData.length ? (
+                <Button
+                  variant="outline"
+                  onClick={goToNextTopic}
+                  className="flex-1 ml-2"
+                >
+                  Next <FaArrowRightLong className="ml-1" />
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={handleComplete}
+                  className="flex-1 ml-2"
+                >
+                  Go to Course
+                </Button>
+              )}
+            </div>
           </div>
         </>
       ) : (

@@ -11,11 +11,25 @@ export default function Chat() {
     <div className="flex min-h-screen w-full bg-cover bg-center bg-gray-100"
     style={{ backgroundImage: `url('/background.jpg')`}}
     >
-      <div className="w-[30%] max-w-[400px] border-r border-gray-300">
+      <div
+        className={`
+          border-r border-gray-300 
+          ${selectedFriend ? "hidden md:block" : "block"} 
+          w-full md:w-[30%] md:max-w-[400px]
+        `}
+      >
         <ChatList onSelectFriend={setSelectedFriend} />
       </div>
-      <div className="flex-1 overflow-hidden">
-        <Message selectedFriend={selectedFriend} />
+      <div
+        className={`
+          flex-1 overflow-hidden 
+          ${!selectedFriend ? "hidden md:block" : "block"}
+        `}
+      >
+        <Message
+          selectedFriend={selectedFriend}
+          onBack={() => setSelectedFriend(null)} 
+        />
       </div>
     </div>
   );

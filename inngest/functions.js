@@ -50,11 +50,36 @@ export const CreateNewUser = inngest.createFunction(
               id: user?.id,
               name: user?.fullName,
               email: user?.primaryEmailAddress?.emailAddress,
+              streak: 1,
+              lastLogin: new Date(),
             })
             .returning({ id: USER_TABLE.id });
-        }
+        }else {
+          const u = existingUser[0];
+          const today = new Date();
+          const lastLogin = new Date(u.lastLogin);
 
-        return existingUser;
+
+          const diffInDays = Math.floor(
+            (today.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24)
+          );
+
+          let newStreak = u.streak;
+          if(diffInDays === 1){
+            newStreak = u.streak + 1;
+          }else if(diffInDays > 1){
+            newStreak = 1;
+          }
+
+          await db.update(USER_TABLE)
+          .set({
+            streak: newStreak,
+            lastLogin: today,
+          })
+          .where(eq(USER_TABLE.id, u.id));
+
+          return { ...u, streak: newStreak, lastLogin: today};
+        }
       }
     );
 
@@ -93,6 +118,7 @@ Generate structured, clean JSON notes for this chapter. Strict rules:
 - Do NOT wrap code examples in backticks.
 - Return only valid JSON.
 - Each detail string should be plain text. If showing code, format as inline string, e.g., "export async function getStaticProps() { return { props: {} }; }"
+- Generate a simple Mermaid.js flowchart that explains this chapter.
 
 Chapter data:
 ${JSON.stringify(chapter, null, 2)}
@@ -107,11 +133,12 @@ The JSON format must be:
       "content": [
         {
           "subtopic": "string",
-          "details": ["string", "string", ...]
+          "details": ["string", "string"]
         }
       ]
     }
-  ]
+  ],
+  "diagram_mermaid": "graph LR; User-->NextJS; NextJS-->Server; Server-->Database;"
 }
 `;
 

@@ -8,21 +8,31 @@ import ReactMarkdown from "react-markdown";
 import { FaArrowRightLong, FaArrowLeftLong } from "react-icons/fa6";
 import rehypeHighlight from "rehype-highlight";
 import { useUser } from "@clerk/nextjs";
+import dynamic from "next/dynamic";
+const MermaidChart = dynamic(() => import("../_components/MermaidChart"), {
+  ssr: false,
+});
+
+function sanitizeMermaid(diagram) {
+  // Wrap square-bracketed nodes with parentheses in quotes
+  diagram = diagram.replace(/\[([^\]]*\([^)]*\)[^\]]*)\]/g, '["$1"]');
+
+  // Wrap curly-brace nodes with parentheses/commas/slashes in quotes
+  diagram = diagram.replace(/\{([^}]*[\(\),\/][^}]*)\}/g, '{"$1"}');
+
+  return diagram;
+}
 
 function parseNotes(notesString) {
-  if (typeof notesString !== "string") return "Invalid content";
+  if (typeof notesString !== "string")
+    return { markdown: "Invalid content", diagram: null };
 
   try {
     const parsed = JSON.parse(notesString);
     let content = "";
 
-    if (parsed.chapter_name) {
-      content += `## ${parsed.chapter_name}\n\n`;
-    }
-
-    if (parsed.chapter_summary) {
-      content += `${parsed.chapter_summary}\n\n`;
-    }
+    if (parsed.chapter_name) content += `## ${parsed.chapter_name}\n\n`;
+    if (parsed.chapter_summary) content += `${parsed.chapter_summary}\n\n`;
 
     const topics = parsed.topics || [];
     for (const topic of topics) {
@@ -32,7 +42,10 @@ function parseNotes(notesString) {
           if (sub.subtopic) content += `**${sub.subtopic}**\n\n`;
           if (Array.isArray(sub.details)) {
             for (const detail of sub.details) {
-              const isCode = detail.includes("function") || detail.includes("{") || detail.includes("=>");
+              const isCode =
+                detail.includes("function") ||
+                detail.includes("{") ||
+                detail.includes("=>");
               if (isCode) content += `\n\`\`\`js\n${detail}\n\`\`\`\n\n`;
               else content += `- ${detail}\n`;
             }
@@ -41,10 +54,15 @@ function parseNotes(notesString) {
       }
     }
 
-    return content.trim() || "No content available";
+    return {
+      markdown: content.trim() || "No content available",
+      diagram: parsed.diagram_mermaid
+        ? sanitizeMermaid(parsed.diagram_mermaid.replace(/```/g, "").trim())
+        : null,
+    };
   } catch (error) {
     console.error("🚨 Error parsing JSON:", error);
-    return "Invalid content format";
+    return { markdown: "Invalid content format", diagram: null };
   }
 }
 
@@ -54,7 +72,10 @@ function ViewNotes() {
   const { user } = useUser();
 
   const [stepCount, setStepCount] = useState(1);
-  const [noteContent, setNoteContent] = useState("");
+  const [noteContent, setNoteContent] = useState({
+    markdown: "",
+    diagram: null,
+  });
   const [initialLoading, setInitialLoading] = useState(true);
   const [isEnd, setIsEnd] = useState(false);
 
@@ -101,7 +122,7 @@ function ViewNotes() {
   };
 
   return (
-    <div className="mt-10">
+    <div className="mt-10 mb-15">
       {initialLoading ? (
         <div className="flex items-center justify-center h-[300px]">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-cyan-600" />
@@ -131,17 +152,21 @@ function ViewNotes() {
         </div>
       ) : (
         <>
-          <div className="prose prose-sm md:prose-md lg:prose-lg max-w-none">
+          <div className="prose prose-sm md:prose-md lg:prose-lg max-w-none pb-20">
             <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
-              {noteContent}
+              {noteContent.markdown}
             </ReactMarkdown>
+
+            {noteContent.diagram && (
+              <MermaidChart chart={noteContent.diagram} />
+            )}
           </div>
 
           <div>
             {stepCount > 1 && (
               <Button
                 variant="outline"
-                className="fixed top-1/2 left-4 transform -translate-y-1/2 ml-6"
+                className="hidden md:flex fixed top-1/2 left-4 -translate-y-1/2 ml-6"
                 onClick={handlePrevious}
               >
                 <FaArrowLeftLong />
@@ -149,12 +174,32 @@ function ViewNotes() {
             )}
             <Button
               variant="outline"
-              className="fixed top-1/2 right-4 transform -translate-y-1/2 mr-6"
+              className="hidden md:flex fixed top-1/2 right-4 -translate-y-1/2 mr-6"
               onClick={handleNext}
               disabled={isEnd}
             >
               <FaArrowRightLong />
             </Button>
+
+            <div className="flex md:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-3 justify-between">
+              {stepCount > 1 && (
+                <Button
+                  variant="outline"
+                  onClick={handlePrevious}
+                  className="flex-1 mr-2"
+                >
+                  <FaArrowLeftLong className="mr-1" /> Prev
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={handleNext}
+                disabled={isEnd}
+                className="flex-1 ml-2"
+              >
+                Next <FaArrowRightLong className="ml-1" />
+              </Button>
+            </div>
           </div>
         </>
       )}

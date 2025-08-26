@@ -66,7 +66,7 @@ function MaterialCardItem({ item, studyTypeContent, course, refreshData }) {
       </h2>
 
       <Image src={item.icon} alt={item.name} width={50} height={50} />
-      <h2 className="font-medium mt-3">{item.name}</h2>
+      <h2 className="text-[14px] sm:text-sm md:text-base font-medium mt-3">{item.name}</h2>
 
       {!isReadyFromParent ? (
         <Button className="mt-3 w-full text-sm" variant="outline" onClick={GenerateContent} disabled={loading}>

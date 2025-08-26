@@ -3,14 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { socket } from "@/lib/socket";
 import { useUser } from "@clerk/nextjs";
+import { ArrowLeft } from "lucide-react";
 
-function Message({ selectedFriend }) {
+function Message({ selectedFriend, onBack }) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
   const { user } = useUser();
 
   const currentUserId = user?.id;
-
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -28,7 +28,6 @@ function Message({ selectedFriend }) {
       });
 
       const data = await res.json();
-      console.log("Fetched messages:", data);
       setMessages(data);
     };
 
@@ -51,14 +50,13 @@ function Message({ selectedFriend }) {
   }, [selectedFriend]);
 
   useEffect(() => {
-  if (selectedFriend && currentUserId) {
-    fetch(`/api/messages/read/${selectedFriend.id}`, {
-      method: "PATCH",
-      headers: { "x-user-id": currentUserId }
-    });
-  }
-}, [selectedFriend, currentUserId]);
-
+    if (selectedFriend && currentUserId) {
+      fetch(`/api/messages/read/${selectedFriend.id}`, {
+        method: "PATCH",
+        headers: { "x-user-id": currentUserId },
+      });
+    }
+  }, [selectedFriend, currentUserId]);
 
   const handleSendMessage = async () => {
     if (!input.trim() || !user) return;
@@ -106,7 +104,7 @@ function Message({ selectedFriend }) {
 
   if (!selectedFriend) {
     return (
-      <div className="h-full flex items-center justify-center text-black text-xl">
+      <div className="h-full flex items-center justify-center text-black text-lg md:text-xl">
         Select a friend to start chatting
       </div>
     );
@@ -116,16 +114,24 @@ function Message({ selectedFriend }) {
 
   return (
     <div className="h-screen flex flex-col justify-between">
-      <div className="p-8">
-        <h1 className="text-black text-2xl font-semibold">
-          Messages with {selectedFriend.name}
+      <div className="p-4 md:p-8 flex items-center gap-3 border-b">
+        <button
+          onClick={onBack}
+          className="md:hidden p-2 rounded-full hover:bg-gray-200"
+        >
+          <ArrowLeft size={22} />
+        </button>
+        <h1 className="text-black text-lg md:text-2xl font-semibold">
+          {selectedFriend.name}
         </h1>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-8 mt-3 pb-16">
+      <div className="flex-1 overflow-y-auto px-4 md:px-8 mt-3 pb-5">
         {Object.entries(groupedMessages).map(([date, msgs]) => (
           <div key={date} className="mb-6">
-            <div className="text-center text-sm text-gray-500 mb-2">{date}</div>
+            <div className="text-center text-xs md:text-sm text-gray-500 mb-2">
+              {date}
+            </div>
             {msgs.map((msg, i) => (
               <div
                 key={i}
@@ -133,7 +139,7 @@ function Message({ selectedFriend }) {
                   msg.senderId === currentUserId ? "text-right" : "text-left"
                 }`}
               >
-                <span className="bg-cyan-600 px-3 py-1 rounded-xl inline-block">
+                <span className="bg-cyan-600 px-3 py-1 rounded-xl inline-block text-sm md:text-base text-white">
                   {msg.message || msg.text}
                 </span>
               </div>
@@ -143,8 +149,8 @@ function Message({ selectedFriend }) {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 border-t backdrop-blur-sm">
-        <div className="flex items-center gap-3">
+      <div className="p-3 md:p-4 border-t bg-white sticky bottom-0">
+        <div className="flex items-center gap-2 md:gap-3 w-full">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -155,11 +161,11 @@ function Message({ selectedFriend }) {
               }
             }}
             placeholder="Type a message..."
-            className="flex-1 rounded-xl px-4 py-2 outline-none"
+            className="flex-1 rounded-lg px-3 py-2 text-sm md:text-base outline-none border bg-white"
           />
           <button
             onClick={handleSendMessage}
-            className="bg-cyan-600 text-black px-4 py-2 rounded-xl hover:bg-cyan-700"
+            className="bg-cyan-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-lg text-sm md:text-base hover:bg-cyan-700"
           >
             Send
           </button>

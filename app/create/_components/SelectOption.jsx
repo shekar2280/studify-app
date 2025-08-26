@@ -32,11 +32,11 @@ function SelectOption({ selectedStudyType }) {
       <h2 className="text-center mb-2 text-lg">
         Choose the topic you want to create the material for ?
       </h2>
-      <div className="grid grid-cols-2 mt-5 md:grid-cols-3 lg:grid-cols-5 gap-5 h-[160px] ">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5 mt-5">
         {Options.map((option, index) => (
           <div
             key={index}
-            className={`p-4 flex flex-col items-center justify-center border rounded-xl hover:border-primary cursor-pointer ${
+            className={`p-3 sm:p-4 flex flex-col items-center justify-center border rounded-xl hover:border-primary cursor-pointer ${
               option?.name == selectedOption && "border-primary"
             }`}
             onClick={() => {
@@ -44,8 +44,14 @@ function SelectOption({ selectedStudyType }) {
               selectedStudyType(option.name);
             }}
           >
-            <Image src={option.icon} alt={option.name} width={50} height={50} />
-            <h2 className="text-sm mt-2">{option.name}</h2>
+            <Image
+              src={option.icon}
+              alt={option.name}
+              width={40}
+              height={40}
+              className="sm:w-[50px] sm:h-[50px]"
+            />
+            <h2 className="text-xs sm:text-sm mt-2">{option.name}</h2>
           </div>
         ))}
       </div>

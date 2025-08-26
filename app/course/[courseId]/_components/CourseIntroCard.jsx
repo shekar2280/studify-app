@@ -14,24 +14,35 @@ function CourseIntroCard({ course, progress }) {
   const progressValue = (completedTasks / totalTasks) * 100;
 
   return (
-    <div className='flex gap-5 items-center p-10 border shadow-md rounded-lg'>
-      <Image src={'/exam.png'} alt='other' height={70} width={70} />
-      <div>
-        <h2 className='font-bold text-2xl'>{course?.courseLayout?.course_name}</h2>
-        <p>{course?.courseLayout?.course_summary}</p>
+    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center p-4 sm:p-6 border shadow-md rounded-lg">
+      <Image
+        src={"/exam.png"}
+        alt="other"
+        height={70}
+        width={70}
+        className="flex-shrink-0 mx-auto sm:mx-0"
+      />
 
-        <Progress className='mt-3' value={progressValue} />
-        <p className='text-sm text-muted-foreground mt-1'>
-          {progressValue}% completed
+      <div className="flex-1 text-center sm:text-left">
+        <h2 className="font-bold text-lg sm:text-2xl line-clamp-2">
+          {course?.courseLayout?.course_name}
+        </h2>
+        
+        <p className="text-[14px] sm:text-sm md:text-base text-muted-foreground mt-1">
+          {course?.courseLayout?.course_summary}
         </p>
 
-        <h2 className='mt-3 text-lg text-primary'>
+        <Progress className="mt-3" value={progressValue} />
+        <p className="text-[14px] sm:text-sm text-muted-foreground mt-1">
+          {progressValue.toFixed(0)}% completed
+        </p>
+
+        <h2 className="mt-2 text-[16px] sm:text-lg text-primary font-semibold">
           Total Chapters: {course?.courseLayout?.chapters?.length}
         </h2>
       </div>
     </div>
   );
 }
-
 
 export default CourseIntroCard;

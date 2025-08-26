@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import MaterialCardItem from "./MaterialCardItem";
 import axios from "axios";
-import Link from "next/link";
 
 function StudyMaterialSection({ courseId, course }) {
   const [studyTypeContent, setStudyTypeContent] = useState();

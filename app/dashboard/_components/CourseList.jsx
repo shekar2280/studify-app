@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, Search } from "lucide-react";
 import { poppins } from "@/app/fonts";
 import { GiBookshelf } from "react-icons/gi";
+import Link from "next/link";
 
 function CourseList() {
   const { user } = useUser();
   const [courseList, setCourseList] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -22,14 +23,16 @@ function CourseList() {
 
   const GetCourseList = async () => {
     setLoading(true);
-    const result = await axios.post("/api/courses", {
-      createdBy: user?.primaryEmailAddress?.emailAddress,
-    });
-
-    setCourseList(result.data.result);
+    try {
+      const result = await axios.post("/api/courses", {
+        createdBy: user?.primaryEmailAddress?.emailAddress,
+      });
+      setCourseList(result.data.result);
+      startPolling(result.data.result);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+    }
     setLoading(false);
-
-    startPolling(result.data.result);
   };
 
   const handleDelete = async (courseId) => {
@@ -91,39 +94,51 @@ function CourseList() {
         );
 
   return (
-    <div className="mt-10 bg-gray-100 min-h-[60vh] rounded-lg">
-      <h2 className="font-bold text-2xl flex justify-between items-center">
-        Your Study Material
-        <div className="flex justify-between items-center gap-3">
-          <div className="flex items-center gap-2 border rounded-md shadow-md">
+    <div className="mt-10 bg-gray-100 min-h-[60vh] rounded-lg p-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-3 mb-4">
+        <h2 className="font-bold text-2xl">Your Study Material</h2>
+
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2 border rounded-md shadow-md w-full sm:w-72 bg-white">
             <input
               type="text"
               placeholder="Search..."
-              className={`w-60 pl-2 font-medium text-lg bg-transparent focus:outline-none focus:ring-0 focus:border-transparent  text-gray-700 ${poppins.className}`}
+              className={`w-full pl-3 py-2 font-medium text-base bg-transparent focus:outline-none text-gray-700 ${poppins.className}`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <button className="p-2 bg-cyan-600 hover:bg-cyan-700 rounded-md transition">
-              <Search className="text-xl text-white" />
+            <button className="p-2 bg-cyan-600 hover:bg-cyan-700 rounded-r-md transition">
+              <Search className="w-5 h-5 text-white" />
             </button>
           </div>
 
-          <Button
-            variant="outline"
-            onClick={GetCourseList}
-            className="border-primar text-black h-10"
-          >
-            <RefreshCw /> Refresh
-          </Button>
-        </div>
-      </h2>
+          <div className="flex flex-row sm:flex-row gap-3 w-full sm:w-auto">
+            <Link href={"/create"} className="w-full sm:w-auto">
+              <Button className="h-10 w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700">
+                <span className="text-lg font-bold">+</span>
+                <span className="hidden sm:inline">Create Course</span>
+                <span className="sm:hidden">Create</span>
+              </Button>
+            </Link>
 
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 mt-5 gap-5">
+            <Button
+              variant="outline"
+              onClick={GetCourseList}
+              className="h-10 w-full sm:w-auto flex items-center justify-center gap-2"
+            >
+              <RefreshCw className="w-5 h-5" />
+              <span className="hidden sm:inline">Refresh</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 mt-5 gap-5">
         {loading ? (
           [1, 2, 3, 4, 5, 6].map((item, index) => (
             <div
               key={index}
-              className="h-56 w-full bg-slate-200 rounded-lg animate-pulse"
+              className="h-[230px] w-full bg-slate-200 rounded-lg animate-pulse"
             ></div>
           ))
         ) : filteredCourses.length === 0 ? (

@@ -6,6 +6,8 @@ import {
   UserCircle,
   VideoIcon,
   MessageCircle,
+  ChartArea,
+  Slack,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,14 +25,6 @@ function SideBar({ collapsed }) {
   const MenuList = [
     { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard", title: "Dashboard" },
     { name: "Chat", icon: MessageCircle, path: "/dashboard/chat", title: "Chat" },
-    {
-      name: "Google Search",
-      icon: FaGoogle,
-      path: "https://www.google.com",
-      external: true,
-      title: "Google Search"
-    },
-    // { name: "Profile", icon: UserCircle, path: "/dashboard/profile", title:"Profile" },
   ];
 
   const path = usePathname();

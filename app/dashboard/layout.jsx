@@ -7,20 +7,20 @@ import { usePathname } from "next/navigation";
 
 function DashboardLayout({ children }) {
   const path = usePathname();
-  const collapsedRoutes = ["/dashboard/chat"];
+   const collapsedRoutes = ["/dashboard/chat"];
   const isCollapsed = collapsedRoutes.includes(path);
 
-  const shouldRemovePadding = path === "/dashboard/chat";
+  const noPaddingRoutes = ["/dashboard"];
+  const shouldRemovePadding = noPaddingRoutes.includes(path);
 
   return (
-    <div className="flex bg-gray-100">
-      <div className={`fixed hidden md:block ${isCollapsed ? "w-20" : "w-64"}`}>
+    <div className="flex min-h-screen w-full bg-cover bg-center bg-gray-100">
+      {/* <div className={`fixed hidden md:block ${isCollapsed ? "w-20" : "w-64"}`}>
         <SideBar collapsed={isCollapsed} />
-      </div>
-
-      <div className={`${isCollapsed ? "md:ml-20" : "md:ml-64"} w-full`}>
-        {!isCollapsed && <DashboardHeader />}
-        <div className={shouldRemovePadding ? "p-0" : "p-10"}>{children}</div>
+      </div> */}
+      <div className="w-full">
+         {path !== "/dashboard/chat" && <DashboardHeader />}
+        <div className={shouldRemovePadding ? "p-10" : "p-0"}>{children}</div>
       </div>
     </div>
   );

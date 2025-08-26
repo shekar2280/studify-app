@@ -55,6 +55,7 @@ function Flashcards() {
     <div>
       <div className="mt-15">
         {flashCards.length > 0 ? (
+         <div className="px-3 sm:px-0">
           <Carousel setApi={setApi}>
             <CarouselContent>
               {flashCards.map((flashcard, index) => (
@@ -97,6 +98,7 @@ function Flashcards() {
             <CarouselPrevious />
             <CarouselNext />
           </Carousel>
+         </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-96 ">
             <p className="mt-4 text-gray-500">Loading Flashcards...</p>
