@@ -21,6 +21,10 @@ export async function POST(req) {
       f.user1Id === userId ? f.user2Id : f.user1Id
     );
 
+    if (friendIds.length === 0) {
+      return NextResponse.json([]);
+    }
+
     const friends = await db
       .select({
         id: USER_TABLE.id,
@@ -30,22 +34,25 @@ export async function POST(req) {
       .from(USER_TABLE)
       .where(inArray(USER_TABLE.id, friendIds));
 
-    const friendsWithUnread = await Promise.all(
-      friends.map(async (friend) => {
-        const [{ unreadCount }] = await db
-          .select({ unreadCount: count() })
-          .from(MESSAGES_TABLE)
-          .where(
-            and(
-              eq(MESSAGES_TABLE.senderId, friend.id), 
-              eq(MESSAGES_TABLE.receiverId, userId),  
-              eq(MESSAGES_TABLE.isRead, false)        
-            )
-          );
-
-        return { ...friend, unreadCount };
+    const unreadCounts = await db
+      .select({
+        senderId: MESSAGES_TABLE.senderId,
+        unreadCount: count(),
       })
-    );
+      .from(MESSAGES_TABLE)
+      .where(
+        and(
+          inArray(MESSAGES_TABLE.senderId, friendIds),
+          eq(MESSAGES_TABLE.receiverId, userId),
+          eq(MESSAGES_TABLE.isRead, false)
+        )
+      )
+      .groupBy(MESSAGES_TABLE.senderId);
+
+    const friendsWithUnread = friends.map((friend) => {
+      const match = unreadCounts.find((uc) => uc.senderId === friend.id);
+      return { ...friend, unreadCount: match ? match.unreadCount : 0 };
+    });
 
     return NextResponse.json(friendsWithUnread);
   } catch (err) {

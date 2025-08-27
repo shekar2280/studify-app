@@ -1,12 +1,13 @@
 "use client";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { poppins } from "@/app/fonts";
-import { Search } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FaUserPlus, FaUsers } from "react-icons/fa6";
 import FriendRequests from "./FriendRequests";
 import OtherUsers from "./OtherUsers";
 import { socket } from "@/lib/socket";
+import { useRouter } from "next/navigation";
 
 function ChatList({ onSelectFriend }) {
   const [friends, setFriends] = useState([]);
@@ -14,6 +15,7 @@ function ChatList({ onSelectFriend }) {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const { user } = useUser();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchFriends = async () => {
@@ -73,7 +75,12 @@ function ChatList({ onSelectFriend }) {
     <div className="h-screen shadow-md p-5 flex flex-col">
       <div>
         <div className="flex flex-row justify-between">
-          <h1 className="font-semibold text-2xl text-black">Chats</h1>
+          <div className="flex flex-row gap-3 items-center ">
+            <button>
+            <ArrowLeft size={22} onClick={() => router.back() || router.push("/dashboard")} />
+            </button>
+            <h1 className="font-semibold text-2xl text-black">Chats</h1>
+          </div>
           <div className="flex flex-row gap-3">
             <FaUserPlus
               size={30}

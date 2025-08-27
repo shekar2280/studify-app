@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   integer,
   json,
   pgTable,
@@ -60,15 +61,22 @@ export const USER_COURSE_PROGRESS_TABLE = pgTable("userCourseProgress", {
   updatedAt: timestamp().defaultNow(),
 });
 
-export const MESSAGES_TABLE = pgTable("messages", {
-  id: serial().primaryKey(),
-  senderId: text("sender_id").notNull(),
-  receiverId: text("receiver_id").notNull(),
-  message: text("message").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  isRead: boolean("is_read").default(false),
-  readAt: timestamp("read_at"),
-});
+export const MESSAGES_TABLE = pgTable(
+  "messages",
+  {
+    id: serial().primaryKey(),
+    senderId: text("sender_id").notNull(),
+    receiverId: text("receiver_id").notNull(),
+    message: text("message").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+    isRead: boolean("is_read").default(false),
+    readAt: timestamp("read_at"),
+  },
+  (table) => ({
+    senderReceiverIdx: index("idx_sender_receiver").on(table.senderId, table.receiverId),
+    receiverIsReadIdx: index("idx_receiver_isread").on(table.receiverId, table.isRead),
+  })
+);
 
 export const FRIEND_REQUEST_TABLE = pgTable("friendRequests", {
   id: serial().primaryKey(),

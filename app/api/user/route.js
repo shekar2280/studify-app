@@ -21,22 +21,29 @@ export async function GET() {
     }
 
     const user = rows[0];
+
+    function stripTime(date) {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
     const today = new Date();
+    const todayDate = stripTime(today);
     const lastLogin = user.lastLogin ? new Date(user.lastLogin) : null;
+    const lastLoginDate = lastLogin ? stripTime(lastLogin) : null;
 
     let newStreak = user.streak || 1;
 
-    if (lastLogin) {
+    if (lastLoginDate) {
       const diffInDays = Math.floor(
-        (today.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24)
+        (todayDate.getTime() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24)
       );
 
       if (diffInDays === 0) {
-        newStreak = user.streak;
+        newStreak = user.streak; 
       } else if (diffInDays === 1) {
-        newStreak = user.streak + 1;
-      } else if (diffInDays > 1) {
-        newStreak = 1;
+        newStreak = user.streak + 1; 
+      } else {
+        newStreak = 1; 
       }
     } else {
       newStreak = 1;
@@ -46,14 +53,14 @@ export async function GET() {
       .update(USER_TABLE)
       .set({
         streak: newStreak,
-        lastLogin: today,
+        lastLogin: todayDate, 
       })
       .where(eq(USER_TABLE.id, userId));
 
     return NextResponse.json({
       ...user,
       streak: newStreak,
-      lastLogin: today,
+      lastLogin: todayDate,
     });
   } catch (error) {
     console.error("Error fetching user:", error);

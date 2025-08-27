@@ -17,7 +17,7 @@ export default function Chat() {
           ${selectedFriend ? "hidden md:block" : "block"} 
           w-full md:w-[30%] md:max-w-[400px]
         `}
-      >
+      > 
         <ChatList onSelectFriend={setSelectedFriend} />
       </div>
       <div

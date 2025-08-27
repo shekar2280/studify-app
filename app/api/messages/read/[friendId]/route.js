@@ -3,7 +3,7 @@ import { MESSAGES_TABLE } from "@/configs/schema";
 import { eq, and } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
-export async function PATCH(req, { params }) {
+export async function GET(req, { params }) {
   const { friendId } = params;
   const currentUserId = req.headers.get("x-user-id");
 

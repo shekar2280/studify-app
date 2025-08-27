@@ -4,21 +4,9 @@ import { useEffect, useState } from "react";
 import { FaFire } from "react-icons/fa6";
 import Image from "next/image";
 
-function WelcomeBanner() {
+function WelcomeBanner({ streak }) {
   const { user } = useUser();
-  const [streak, setStreak] = useState(null);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const res = await fetch("/api/user");
-      if (res.ok) {
-        const data = await res.json();
-        setStreak(data.streak);
-      }
-    };
-    fetchUser();
-  }, []);
-
+  
   if (streak === null) {
     return (
       <div className="flex justify-center items-center">

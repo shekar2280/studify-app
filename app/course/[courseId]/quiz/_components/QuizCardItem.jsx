@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState } from "react";
 
-function QuizCardItem({ quiz, userSelectedOption }) {
+function QuizCardItem({ quiz, correctAnswer }) {
   const [selectedOption, setSelectedOption] = useState();
 
   return (
@@ -11,26 +11,43 @@ function QuizCardItem({ quiz, userSelectedOption }) {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 mt-4 sm:mt-6">
-          {quiz?.options.map((option, index) => (
-            <h2
-              onClick={() => {
-                setSelectedOption(option);
-                userSelectedOption(option);
-              }}
-              key={index}
-              className={`w-full border border-gray-400 rounded-xl p-3 px-4 text-center 
-              text-sm sm:text-base lg:text-xl 
-              hover:bg-cyan-600 cursor-pointer
-              ${selectedOption == option && "bg-cyan-600 text-white hover:bg-cyan-800"}
-              `}
-            >
-              {option}
-            </h2>
-          ))}
+          {quiz?.options.map((option, index) => {
+            let optionClass =
+              "border border-gray-400 rounded-xl p-3 px-4 text-center text-sm sm:text-base lg:text-xl cursor-pointer ";
+
+            if (selectedOption) {
+              if (option === selectedOption && option === correctAnswer) {
+                optionClass += "bg-green-600 text-white"; 
+              } else if (
+                option === selectedOption &&
+                option !== correctAnswer
+              ) {
+                optionClass += "bg-red-600 text-white"; 
+              } else if (option === correctAnswer) {
+                optionClass += "bg-green-600 text-white"; 
+              }
+            } else {
+              optionClass += "hover:bg-cyan-600"; 
+            }
+
+            return (
+              <h2
+                key={index}
+                onClick={() => {
+                  if (!selectedOption) {
+                    setSelectedOption(option); 
+                  }
+                }}
+                className={optionClass}
+              >
+                {option}
+              </h2>
+            );
+          })}
         </div>
       </div>
     )
   );
 }
 
-export default QuizCardItem
+export default QuizCardItem;
