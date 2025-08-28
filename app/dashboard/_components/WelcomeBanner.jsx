@@ -42,7 +42,7 @@ function WelcomeBanner({ streak }) {
           <FaFire className="text-orange-400" size={40} />
           <div className="flex flex-col items-center sm:items-start">
             <span className="text-2xl sm:text-4xl md:text-5xl font-bold">
-              {streak} days
+              {streak} {streak === 1 ? "day" : "days"}
             </span>
             <span className="text-xs sm:text-base md:text-lg text-orange-500">
               Current streak
