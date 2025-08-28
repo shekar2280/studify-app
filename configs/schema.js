@@ -1,5 +1,6 @@
 import {
   boolean,
+  date,
   index,
   integer,
   json,
@@ -16,7 +17,7 @@ export const USER_TABLE = pgTable("users", {
   email: varchar().notNull(),
   isMember: boolean().default(false),
   createdAt: timestamp().defaultNow(),
-  lastLogin: timestamp().defaultNow(), 
+  lastLogin: date(), 
   streak: integer().default(0),
 });
 

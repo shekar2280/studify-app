@@ -44,6 +44,7 @@ export const CreateNewUser = inngest.createFunction(
           .where(eq(USER_TABLE.email, user?.primaryEmailAddress?.emailAddress));
 
         if (existingUser?.length === 0) {
+          const todayDate = new Date().toISOString().split("T")[0];
           return await db
             .insert(USER_TABLE)
             .values({
@@ -51,34 +52,38 @@ export const CreateNewUser = inngest.createFunction(
               name: user?.fullName,
               email: user?.primaryEmailAddress?.emailAddress,
               streak: 1,
-              lastLogin: new Date(),
+              lastLogin: todayDate,
             })
             .returning({ id: USER_TABLE.id });
-        }else {
+        } else {
           const u = existingUser[0];
-          const today = new Date();
-          const lastLogin = new Date(u.lastLogin);
-
-
-          const diffInDays = Math.floor(
-            (today.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24)
-          );
+          const todayDate = new Date().toISOString().split("T")[0]; 
+          const lastLoginDate = u.lastLogin; 
 
           let newStreak = u.streak;
-          if(diffInDays === 1){
-            newStreak = u.streak + 1;
-          }else if(diffInDays > 1){
+
+          if (lastLoginDate) {
+            const diffInDays =
+              (new Date(todayDate).getTime() - new Date(lastLoginDate).getTime()) /
+              (1000 * 60 * 60 * 24);
+
+            if (diffInDays === 1) {
+              newStreak = u.streak + 1;
+            } else if (diffInDays > 1) {
+              newStreak = 1;
+            }
+          } else {
             newStreak = 1;
           }
 
           await db.update(USER_TABLE)
-          .set({
-            streak: newStreak,
-            lastLogin: today,
-          })
-          .where(eq(USER_TABLE.id, u.id));
+            .set({
+              streak: newStreak,
+              lastLogin: todayDate,
+            })
+            .where(eq(USER_TABLE.id, u.id));
 
-          return { ...u, streak: newStreak, lastLogin: today};
+          return { ...u, streak: newStreak, lastLogin: todayDate };
         }
       }
     );
@@ -86,6 +91,7 @@ export const CreateNewUser = inngest.createFunction(
     return "User Authentication Successfully Completed";
   }
 );
+
 
 export const GenerateNotes = inngest.createFunction(
   { id: "generate-course" },
