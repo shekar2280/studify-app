@@ -35,6 +35,10 @@ function Message({ selectedFriend, onBack }) {
   }, [selectedFriend, currentUserId]);
 
   useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
     if (!socket) return;
 
     socket.on("chat-message", (msg) => {
@@ -52,7 +56,7 @@ function Message({ selectedFriend, onBack }) {
   useEffect(() => {
     if (selectedFriend && currentUserId) {
       fetch(`/api/messages/read/${selectedFriend.id}`, {
-        method: "PATCH",
+        method: "GET",
         headers: { "x-user-id": currentUserId },
       });
     }
