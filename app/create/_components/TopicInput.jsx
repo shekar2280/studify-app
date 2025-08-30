@@ -1,5 +1,5 @@
 import { Textarea } from "@/components/ui/textarea";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Tesseract from "tesseract.js";
 
 import {
@@ -12,12 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { GoUpload } from "react-icons/go";
+import { Check, Loader } from "lucide-react";
 
 function TopicInput({ setTopic, setDifficultyLevel }) {
   const router = useRouter();
   const [selectedImage, setSelectedImage] = useState(null);
   const [ocrResult, setOcrResult] = useState("");
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
@@ -41,35 +43,45 @@ function TopicInput({ setTopic, setDifficultyLevel }) {
   };
 
   return (
-    <div className="mt-2 w-full max-w-lg mx-auto flex-col">
+    <div className="mt-1 w-full max-w-lg mx-auto flex-col">
       <h2 className="text-sm sm:text-base">
         Enter topic or paste the content for which you want to generate the
         content
       </h2>
       <Textarea
         placeholder="Start writing here"
-        className="mt-2 w-full h-28 sm:h-40"
+        className="mt-2 w-full h-24 sm:h-30"
         onChange={(event) => setTopic(event.target.value)}
       />
 
       <div className="flex flex-col items-center justify-center mt-5 gap-4">
         <h2 className="text-sm sm:text-base"> OR </h2>
         <div className="p-4 w-full sm:w-[400px] flex flex-col items-center justify-center border rounded-xl shadow-md">
-          <GoUpload className="mb-3" size={20} />
-          <h2 className="mb-4 text-base font-semibold">Upload an Image</h2>
+          
+          <button onClick={() => fileInputRef.current.click()} className="flex flex-col items-center gap-2 text-base font-semibold">
+            <GoUpload size={20} /> Upload an Image
+          </button>
           <input
             type="file"
-            accept="image/*"
-            className="flex justify-center text-sm"
+            ref={fileInputRef}
+            style={{ display: "none" }}
             onChange={handleImageUpload}
           />
-          {loading && <p className="mt-4 text-cyan-500">Reading image...</p>}
+          {loading && (
+            <div className="flex flex-row gap-3">
+              <Loader />
+              <p className="mt-4 text-cyan-500"> Reading image...</p>
+            </div>
+          )}
           {ocrResult && (
-            <div className="mt-4 text-center">
-              <h3 className="font-semibold mb-2">📝 Topic Contents:</h3>
-              <p className="whitespace-pre-line text-sm max-w-xs sm:max-w-md">
+            <div className="mt-4 text-center text-green-400 flex flex-row gap-2">
+              <Check />
+              <h3 className="font-semibold text-green-400 mb-2">
+                File Uploaded{" "}
+              </h3>
+              {/* <p className="whitespace-pre-line text-sm max-w-xs sm:max-w-md">
                 {ocrResult}
-              </p>
+              </p> */}
             </div>
           )}
         </div>

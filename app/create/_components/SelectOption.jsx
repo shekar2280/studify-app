@@ -47,9 +47,9 @@ function SelectOption({ selectedStudyType }) {
             <Image
               src={option.icon}
               alt={option.name}
-              width={40}
-              height={40}
-              className="sm:w-[50px] sm:h-[50px]"
+              width={50}
+              height={50}
+              className="sm:w-[60px] sm:h-[60px]"
             />
             <h2 className="text-xs sm:text-sm mt-2">{option.name}</h2>
           </div>
