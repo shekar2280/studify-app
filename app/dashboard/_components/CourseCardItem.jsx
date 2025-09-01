@@ -55,7 +55,7 @@ const CourseCardItem = ({ course, onDelete }) => {
   };
 
   return (
-    <div className="relative border rounded-lg shadow-md h-[230px] sm:h-[250px] md:h-[280px] flex flex-col justify-between overflow-hidden">
+    <div className="relative border rounded-lg shadow-md h-[230px] sm:h-[250px] md:h-[280px] flex flex-col justify-between overflow-hidden bg-white">
       <Image
         src="/course-card.jpg" 
         alt="Course Background"

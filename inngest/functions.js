@@ -129,7 +129,14 @@ Generate structured, clean JSON notes for this chapter. Strict rules:
 - Do NOT wrap code examples in backticks.
 - Return only valid JSON.
 - Each detail string should be plain text. If showing code, format as inline string, e.g., "export async function getStaticProps() { return { props: {} }; }"
-- Generate a simple Mermaid.js flowchart that explains this chapter.
+
+For the "diagram_mermaid" field:
+- Must use Mermaid.js syntax.
+- Use line breaks, not semicolons.
+- Example of valid format:
+  "diagram_mermaid": "graph LR\n  User --> Request\n  Request --> Server\n  Server --> DB"
+
+Now generate notes for this chapter:
 
 Chapter data:
 ${JSON.stringify(chapter, null, 2)}
@@ -149,7 +156,7 @@ The JSON format must be:
       ]
     }
   ],
-  "diagram_mermaid": "graph LR; User-->NextJS; NextJS-->Server; Server-->Database;"
+  "diagram_mermaid": "graph LR\n  Node1 --> Node2"
 }
 `;
 
