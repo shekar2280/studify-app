@@ -13,9 +13,9 @@ export default function MermaidChart({ chart }) {
       startOnLoad: false,
       theme: "default",
       themeVariables: {
-        fontSize: "18px", 
-        nodeSpacing: 50, 
-        rankSpacing: 50,
+        fontSize: "56px", 
+        nodeSpacing: 200, 
+        rankSpacing: 160,
       },
     });
 
