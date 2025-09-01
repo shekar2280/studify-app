@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { FaFire } from "react-icons/fa6";
 import Image from "next/image";
 
-function WelcomeBanner({ streak }) {
+function WelcomeBanner({ streak, dailyLimit }) {
   const { user } = useUser();
   
   if (streak === null) {
@@ -38,7 +38,8 @@ function WelcomeBanner({ streak }) {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-black/40 px-3 py-2 rounded-lg sm:rounded-xl">
+        <div className="flex flex-col items-center gap-2 bg-black/40 px-3 py-2 rounded-lg sm:rounded-xl">
+          <div className="flex flex-row gap-3 items-center">
           <FaFire className="text-orange-400" size={40} />
           <div className="flex flex-col items-center sm:items-start">
             <span className="text-2xl sm:text-4xl md:text-5xl font-bold">
@@ -48,6 +49,10 @@ function WelcomeBanner({ streak }) {
               Current streak
             </span>
           </div>
+          </div>
+            <button className={`p-3 rounded-lg mt-3 ${dailyLimit === 0 ? "bg-red-500" : dailyLimit <= 3 ? "bg-orange-500" : "bg-blue-500"}`}>
+              {dailyLimit === 0 ? "Limit Exhausted" : `Courses left today: ${dailyLimit}`}
+            </button>
         </div>
       </div>
     </div>

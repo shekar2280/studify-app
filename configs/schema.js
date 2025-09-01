@@ -19,6 +19,7 @@ export const USER_TABLE = pgTable("users", {
   createdAt: timestamp().defaultNow(),
   lastLogin: date(), 
   streak: integer().default(0),
+  dailyLimit: integer().default(10),
 });
 
 export const STUDY_MATERIAL_TABLE = pgTable("studyMaterial", {

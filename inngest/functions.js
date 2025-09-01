@@ -7,7 +7,7 @@ import {
   STUDY_TYPE_CONTENT_TABLE,
   USER_TABLE,
 } from "@/configs/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import {
   generateNotesAiModel,
   GenerateQAAiModel,
@@ -57,14 +57,15 @@ export const CreateNewUser = inngest.createFunction(
             .returning({ id: USER_TABLE.id });
         } else {
           const u = existingUser[0];
-          const todayDate = new Date().toISOString().split("T")[0]; 
-          const lastLoginDate = u.lastLogin; 
+          const todayDate = new Date().toISOString().split("T")[0];
+          const lastLoginDate = u.lastLogin;
 
           let newStreak = u.streak;
 
           if (lastLoginDate) {
             const diffInDays =
-              (new Date(todayDate).getTime() - new Date(lastLoginDate).getTime()) /
+              (new Date(todayDate).getTime() -
+                new Date(lastLoginDate).getTime()) /
               (1000 * 60 * 60 * 24);
 
             if (diffInDays === 1) {
@@ -76,7 +77,8 @@ export const CreateNewUser = inngest.createFunction(
             newStreak = 1;
           }
 
-          await db.update(USER_TABLE)
+          await db
+            .update(USER_TABLE)
             .set({
               streak: newStreak,
               lastLogin: todayDate,
@@ -92,15 +94,18 @@ export const CreateNewUser = inngest.createFunction(
   }
 );
 
-
 export const GenerateNotes = inngest.createFunction(
   { id: "generate-course" },
   { event: "notes.generate" },
   async ({ event, step }) => {
     const { course } = event.data;
 
-    if (!course || !course.courseId || !course.courseLayout?.chapters) {
-      console.error("Missing course data!");
+    if (
+      !course ||
+      !course.courseId ||
+      !course.courseLayout?.chapters ||
+      !course.userId
+    ) {
       throw new Error("Invalid course data received.");
     }
 
@@ -108,7 +113,7 @@ export const GenerateNotes = inngest.createFunction(
       const [insertedNote] = await db
         .insert(CHAPTER_NOTES_TABLE)
         .values({
-          chapterId: index + 1,
+          chapterId: chapter.chapter_number,
           courseId: course.courseId,
           notes: "",
           status: "Generating",
@@ -149,12 +154,12 @@ The JSON format must be:
 `;
 
       const result = await generateNotesAiModel.sendMessage(PROMPT);
-
       const aiResp = await result.response.text();
 
       if (!aiResp || aiResp.trim().length === 0) {
         throw new Error("AI returned empty notes.");
       }
+
       await db
         .update(CHAPTER_NOTES_TABLE)
         .set({ notes: aiResp, status: "Ready" })
@@ -162,18 +167,27 @@ The JSON format must be:
     };
 
     await step.run("Generate Chapter Notes", async () => {
-      const Chapters = course?.courseLayout?.chapters;
+      const chapters = course.courseLayout.chapters;
 
-      for (let index = 0; index < Chapters.length; index++) {
-        await generateChapterNotes(Chapters[index], index);
+      for (let index = 0; index < chapters.length; index++) {
+        await generateChapterNotes(chapters[index], index);
       }
+
       await db
         .update(STUDY_MATERIAL_TABLE)
         .set({ status: "Ready" })
         .where(eq(STUDY_MATERIAL_TABLE.courseId, course.courseId));
 
+
+      await db
+        .update(USER_TABLE)
+        .set({
+          dailyLimit: sql`GREATEST(${USER_TABLE.dailyLimit} - 1, 0)`,
+        })
+        .where(eq(USER_TABLE.id, course.userId)); 
+
       return "Completed";
-    });
+    })
   }
 );
 
@@ -224,8 +238,19 @@ export const GenerateStudyTypeContent = inngest.createFunction(
 export const generateCourseOutline = inngest.createFunction(
   { id: "generate-course-outline" },
   { event: "course.generateOutline" },
-  async ({ event }) => {
-    const { recordId, topic, courseType, difficultyLevel } = event.data;
+  async ({ event, step }) => {
+    const { recordId, topic, courseType, difficultyLevel, userId } = event.data;
+
+    if (!recordId || !topic || !courseType || !difficultyLevel || !userId) {
+      console.error("❌ Missing required data:", {
+        recordId,
+        topic,
+        courseType,
+        difficultyLevel,
+        userId,
+      });
+      throw new Error("Missing required data for course generation");
+    }
 
     const PROMPT = `Generate a study material for ${topic} for ${courseType} with difficulty level ${difficultyLevel}. 
     Provide:
@@ -235,43 +260,81 @@ export const generateCourseOutline = inngest.createFunction(
     Return JSON format only.`;
 
     try {
-      const aiResp = await courseOutlineAIModel.sendMessage(PROMPT);
-      const aiResult = JSON.parse(await aiResp.response.text());
+      const aiResult = await step.run("generate-ai-outline", async () => {
+        
+        if (!courseOutlineAIModel) {
+          throw new Error("courseOutlineAIModel is not available");
+        }
 
-      const existingCourse = await db
-        .select({ courseId: STUDY_MATERIAL_TABLE.courseId })
-        .from(STUDY_MATERIAL_TABLE)
-        .where(eq(STUDY_MATERIAL_TABLE.id, recordId));
+        const aiResp = await courseOutlineAIModel.sendMessage(PROMPT);
+        const responseText = await aiResp.response.text();
+        try {
+          const parsed = JSON.parse(responseText);
+          return parsed;
+        } catch (parseError) {
+          console.error("❌ JSON Parse Error:", parseError);
+          console.error("❌ Raw response that failed to parse:", responseText);
+          throw new Error(
+            `Failed to parse AI response as JSON: ${parseError.message}`
+          );
+        }
+      });
 
-      if (
-        !existingCourse ||
-        existingCourse.length === 0 ||
-        !existingCourse[0].courseId
-      ) {
-        console.error("Course not found or courseId missing!");
-        throw new Error("Course not found in the database.");
-      }
+      const existingCourse = await step.run(
+        "check-existing-course",
+        async () => {
+          const course = await db
+            .select({ courseId: STUDY_MATERIAL_TABLE.courseId })
+            .from(STUDY_MATERIAL_TABLE)
+            .where(eq(STUDY_MATERIAL_TABLE.id, recordId));
 
-      await db
-        .update(STUDY_MATERIAL_TABLE)
-        .set({ courseLayout: aiResult, status: "Generating" })
-        .where(eq(STUDY_MATERIAL_TABLE.id, recordId));
+          if (!course || course.length === 0 || !course[0].courseId) {
+            throw new Error("Course not found in the database.");
+          }
 
-      await inngest.send({
-        name: "notes.generate",
-        data: {
-          course: {
-            courseId: existingCourse[0].courseId,
+          return course[0];
+        }
+      );
+
+      await step.run("update-course-layout", async () => {
+        const updateResult = await db
+          .update(STUDY_MATERIAL_TABLE)
+          .set({
             courseLayout: aiResult,
+            status: "Generating",
+          })
+          .where(eq(STUDY_MATERIAL_TABLE.id, recordId))
+          .returning();
+
+        return updateResult;
+      });
+
+      await step.run("send-notes-event", async () => {
+        const eventResult = await inngest.send({
+          name: "notes.generate",
+          data: {
+            course: {
+              courseId: existingCourse.courseId,
+              courseLayout: aiResult,
+              userId: userId, 
+            },
           },
-        },
+        });
+
+        return eventResult;
       });
     } catch (error) {
-      console.error("AI Generation Error:", error.message);
-      await db
-        .update(STUDY_MATERIAL_TABLE)
-        .set({ status: "failed" })
-        .where(eq(STUDY_MATERIAL_TABLE.id, recordId));
+      console.error("❌ Error in generateCourseOutline:", error);
+      console.error("❌ Error stack:", error.stack);
+
+      await step.run("update-failed-status", async () => {
+        return await db
+          .update(STUDY_MATERIAL_TABLE)
+          .set({ status: "failed" })
+          .where(eq(STUDY_MATERIAL_TABLE.id, recordId));
+      });
+
+      throw error;
     }
   }
 );

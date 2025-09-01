@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import SelectOption from "./_components/SelectOption";
 import { Button } from "@/components/ui/button";
 import TopicInput from "./_components/TopicInput";
@@ -15,8 +15,20 @@ function Create() {
   const [formData, setFormData] = useState([]);
   const { user } = useUser();
   const [loading, setLoading] = useState(false);
+  const [dailyLimit, setDailyLimit] = useState(null);
 
   const router = useRouter();
+
+  useEffect(() => {
+    if (dailyLimit === null) {
+      fetch("/api/user")
+        .then((res) => res.json())
+        .then((data) => {
+          setDailyLimit(data.dailyLimit);
+        })
+        .catch((err) => console.error(err));
+    }
+  }, [dailyLimit]);
 
   const handleUserInput = (fieldName, fieldValue) => {
     setFormData((prev) => ({
@@ -46,6 +58,7 @@ function Create() {
         courseId,
         ...formData,
         createdBy: user?.primaryEmailAddress?.emailAddress,
+        userId: user?.id,
       });
     } catch (error) {
       console.error("Generation Error", error);
@@ -91,23 +104,25 @@ function Create() {
           " - "
         )}
         {step == 0 ? (
-          <Button
-            onClick={handleNext}
-            className="w-full sm:w-auto"
-          >
+          <Button onClick={handleNext} className="w-full sm:w-auto">
             Next
           </Button>
         ) : (
           <Button
             onClick={GenerateCourseOutline}
-            className="w-full sm:w-auto hover:bg-cyan-600/80 transition-colors duration-200"
+            disabled={dailyLimit === 0}
+            className={`w-full sm:w-auto transition-colors duration-200 ${
+              dailyLimit === 0
+                ? "bg-gray-400 cursor-not-allowed hover:bg-gray-400"
+                : "hover:bg-cyan-600/80"
+            }`}
           >
-            Generate
+            {dailyLimit === 0 ? "Limit Exhausted" : "Generate"}
           </Button>
         )}
       </div>
 
-       {/* MOBILE UI */}
+      {/* MOBILE UI */}
       <div className="flex sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-3 justify-between z-50">
         {step != 0 && (
           <Button
@@ -125,9 +140,14 @@ function Create() {
         ) : (
           <Button
             onClick={GenerateCourseOutline}
-            className="flex-1 ml-2 hover:bg-cyan-600/80 transition-colors duration-200"
+            disabled={dailyLimit === 0} 
+            className={`flex-1 ml-2 transition-colors duration-200 ${
+              dailyLimit === 0
+                ? "bg-gray-400 cursor-not-allowed hover:bg-gray-400"
+                : "hover:bg-cyan-600/80"
+            }`}
           >
-            Generate
+            {dailyLimit === 0 ? "Limit Exhausted" : "Generate"}
           </Button>
         )}
       </div>

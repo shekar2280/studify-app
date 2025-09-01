@@ -13,17 +13,21 @@ function DashboardLayout({ children }) {
   const noPaddingRoutes = ["/dashboard"];
   const shouldRemovePadding = noPaddingRoutes.includes(path);
 
-  // Persist streak state here
+
   const [streak, setStreak] = useState(null);
+  const [dailyLimit, setDailyLimit] = useState(null);
 
   useEffect(() => {
-    if (streak === null) {
+    if (streak === null || dailyLimit === null) {
       fetch("/api/user")
-        .then(res => res.json())
-        .then(data => setStreak(data.streak))
-        .catch(err => console.error(err));
+        .then((res) => res.json())
+        .then((data) => {
+          setStreak(data.streak);
+          setDailyLimit(data.dailyLimit);
+        })
+        .catch((err) => console.error(err));
     }
-  }, [streak]);
+  }, [streak, dailyLimit]);
 
   return (
     <div className="flex min-h-screen w-full bg-cover bg-center bg-gray-100">
@@ -31,8 +35,9 @@ function DashboardLayout({ children }) {
         {path !== "/dashboard/chat" && <DashboardHeader />}
 
         <div className={shouldRemovePadding ? "p-10" : "p-0"}>
-          {/* Pass streak to WelcomeBanner only on dashboard */}
-          {path === "/dashboard" && <WelcomeBanner streak={streak} />}
+          {path === "/dashboard" && (
+            <WelcomeBanner streak={streak} dailyLimit={dailyLimit} />
+          )}
           {children}
         </div>
       </div>

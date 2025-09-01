@@ -14,12 +14,23 @@ function CourseList() {
   const [courseList, setCourseList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-
+  const [dailyLimit, setDailyLimit] = useState(null);
   useEffect(() => {
     if (user) {
       GetCourseList();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (dailyLimit === null) {
+      fetch("/api/user")
+        .then((res) => res.json())
+        .then((data) => {
+          setDailyLimit(data.dailyLimit);
+        })
+        .catch((err) => console.error(err));
+    }
+  }, [dailyLimit]);
 
   const GetCourseList = async () => {
     setLoading(true);
@@ -113,13 +124,24 @@ function CourseList() {
           </div>
 
           <div className="flex flex-row sm:flex-row gap-3 w-full sm:w-auto">
-            <Link href={"/create"} className="w-full sm:w-auto">
-              <Button className="h-10 w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700">
+            {dailyLimit === 0 ? (
+              <Button
+                className="h-10 w-full sm:w-auto flex items-center justify-center gap-2 bg-gray-400 cursor-not-allowed"
+                disabled
+              >
                 <span className="text-lg font-bold">+</span>
                 <span className="hidden sm:inline">Create Course</span>
                 <span className="sm:hidden">Create</span>
               </Button>
-            </Link>
+            ) : (
+              <Link href={"/create"} className="w-full sm:w-auto">
+                <Button className="h-10 w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700">
+                  <span className="text-lg font-bold">+</span>
+                  <span className="hidden sm:inline">Create Course</span>
+                  <span className="sm:hidden">Create</span>
+                </Button>
+              </Link>
+            )}
 
             <Button
               variant="outline"

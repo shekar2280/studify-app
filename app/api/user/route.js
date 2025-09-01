@@ -27,24 +27,30 @@ export async function GET() {
     const user = rows[0];
 
     const todayDate = getDateOnly(new Date());
-    const lastLoginDate = user.lastLogin; 
+    const lastLoginDate = user.lastLogin;
 
     let newStreak = user.streak || 1;
+    let newDailyLimit = user.dailyLimit || 10;
 
     if (lastLoginDate) {
-      const diffInDays =
+      const diffInDays = Math.floor(
         (new Date(todayDate).getTime() - new Date(lastLoginDate).getTime()) /
-        (1000 * 60 * 60 * 24);
+          (1000 * 60 * 60 * 24)
+      );
 
       if (diffInDays === 0) {
         newStreak = user.streak;
+        newDailyLimit = user.dailyLimit;
       } else if (diffInDays === 1) {
         newStreak = user.streak + 1;
+        newDailyLimit = 10;
       } else {
         newStreak = 1;
+        newDailyLimit = 10;
       }
     } else {
       newStreak = 1;
+      newDailyLimit = 10;
     }
 
     await db
@@ -52,6 +58,7 @@ export async function GET() {
       .set({
         streak: newStreak,
         lastLogin: todayDate,
+        dailyLimit: newDailyLimit,
       })
       .where(eq(USER_TABLE.id, userId));
 
@@ -59,6 +66,7 @@ export async function GET() {
       ...user,
       streak: newStreak,
       lastLogin: todayDate,
+      dailyLimit: newDailyLimit,
     });
   } catch (error) {
     console.error("Error fetching user:", error);
